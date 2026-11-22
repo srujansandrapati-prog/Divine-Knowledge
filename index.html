@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta id="ef-viewport" name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ExamForge — Engineering Exam Simulator</title>
 
   <!-- Typography -->
@@ -939,25 +939,172 @@
     .toast.error { border-left-color: #EF4444; }
 
     /* =====================================================================
-       RESPONSIVE BREAKPOINTS
+       OVERFLOW PROTECTION, QUESTION TABLES & DESKTOP MODE TOGGLE
+       ===================================================================== */
+    html:not(.desktop-mode),
+    html:not(.desktop-mode) body {
+      overflow-x: hidden;
+      max-width: 100%;
+    }
+    .main-col, .content-wrap, .view-section, .card,
+    .grid-2 > *, .dash-mid-grid > *, .dash-bot-grid > *,
+    .kpi-grid > *, .tests-grid > *, .exam-main, .exam-q-card, .exam-opt-content {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .tests-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); }
+    .prompt-box { max-width: 100%; overflow-x: auto; word-break: break-word; }
+
+    /* Crisp Responsive Tables (UI Tables + Question/Explanation Tables) */
+    .table-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+    .table-wrap table { width: 100%; border-collapse: collapse; }
+    .table-wrap input.input { min-width: 74px; }
+
+    .q-table-wrap {
+      margin: 12px 0;
+      background: #FFFFFF;
+      border: 1px solid #CFDCEB;
+      border-radius: 10px;
+    }
+    .q-table {
+      width: 100%;
+      min-width: 240px;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      color: #132038;
+    }
+    .q-table th, .q-table td {
+      padding: 8px 11px;
+      border: 1px solid #D7E2F0;
+      text-align: left;
+      vertical-align: top;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+    .q-table th {
+      background: #EEF4FC;
+      color: #14223B;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .q-table tr:nth-child(even) td { background: #FAFBFD; }
+    [data-theme="dark"] #app-shell .q-table-wrap { background: var(--bg-surface); border-color: var(--border-color); }
+    [data-theme="dark"] #app-shell .q-table { color: var(--text-primary); }
+    [data-theme="dark"] #app-shell .q-table th { background: var(--bg-subtle); color: var(--text-primary); border-color: var(--border-color); }
+    [data-theme="dark"] #app-shell .q-table td { border-color: var(--border-color); }
+    [data-theme="dark"] #app-shell .q-table tr:nth-child(even) td { background: rgba(255, 255, 255, 0.03); }
+
+    /* Prevent wide LaTeX formulas from stretching mobile width */
+    mjx-container { max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+
+    /* Mobile Sidebar Drawer Backdrop */
+    #mobile-sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 20, 38, 0.45);
+      z-index: 35;
+    }
+    #mobile-sidebar-backdrop.show { display: block; }
+
+    /* Desktop Mode Active Indicator */
+    .desktop-mode .btn-desktop-toggle {
+      background: var(--brand-blue-soft);
+      color: var(--brand-blue);
+      border-color: var(--brand-blue);
+    }
+    .exam-palette-toggle-btn { display: none; }
+
+    /* =====================================================================
+       RESPONSIVE BREAKPOINTS (MOBILE FIT)
        ===================================================================== */
     @media (max-width: 1180px) {
-      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .dash-mid-grid, .dash-bot-grid { grid-template-columns: 1fr 1fr; }
       .hero-banner { grid-template-columns: 1fr; text-align: left; }
       .hero-right { text-align: left; }
     }
     @media (max-width: 900px) {
       .auth-card { grid-template-columns: 1fr; }
-      .auth-hero { min-height: 240px; padding: 26px; }
-      .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); }
+      .auth-hero { min-height: 220px; padding: 24px 20px; }
+      .auth-form-pane { padding: 24px 20px; }
+
+      .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); box-shadow: var(--shadow-lg); }
       .sidebar.mobile-open { transform: translateX(0); }
-      .mobile-menu-btn { display: inline-flex; }
-      .grid-2, .dash-mid-grid, .dash-bot-grid { grid-template-columns: 1fr; }
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .mobile-menu-btn { display: inline-flex; flex-shrink: 0; }
+
+      .topbar { padding: 0 12px; gap: 8px; }
+      .topbar-left { gap: 8px; min-width: 0; max-width: none; }
+      .search-box { padding: 7px 11px; min-width: 0; }
+      .search-kbd { display: none; }
+      .topbar-right { gap: 6px; flex-shrink: 0; }
+      .sync-pill { padding: 6px 8px; }
+      #sync-status-text { display: none; }
+      #drive-status-label { display: none; }
+      .user-name { display: none; }
+      .user-chip { padding: 3px 6px 3px 4px; gap: 4px; }
+
+      .content-wrap { padding: 14px 12px 28px; }
+      .card { padding: 14px 13px; }
+      .page-header h2 { font-size: 19px; }
+
+      .hero-banner { padding: 18px 16px; min-height: auto; gap: 10px; }
+      .hero-title { font-size: 26px; }
+      .hero-subtitle { font-size: 14px; }
+      .hero-verse { font-size: 13.5px; }
+
+      .grid-2, .dash-mid-grid, .dash-bot-grid { grid-template-columns: 1fr; gap: 12px; }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .kpi-card { padding: 11px 10px; gap: 9px; }
+      .kpi-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
+      .kpi-val { font-size: 17px; }
+      .kpi-lbl { font-size: 11px; }
+
+      .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .quick-tile { padding: 12px 10px; min-height: 88px; }
+      .quick-tile h4 { font-size: 12.5px; }
+      .quick-tile p { font-size: 11px; }
+
+      .modal-backdrop { padding: 10px; }
+      .modal-box { padding: 16px 14px; border-radius: 14px; }
+
+      /* Mobile Distraction-Free Exam Workspace */
+      .exam-topbar { height: auto; min-height: 52px; padding: 8px 10px; gap: 8px; flex-wrap: wrap; }
+      .exam-topbar strong { max-width: 170px !important; font-size: 13.5px !important; }
+      .exam-timer { font-size: 13.5px; padding: 5px 9px; }
+      .exam-section-bar { padding: 6px 10px; }
       .exam-body { grid-template-columns: 1fr; }
+      .exam-main { padding: 12px 10px; }
+      .exam-q-card { padding: 14px 12px; }
+      .exam-q-text { font-size: 14.5px; }
+      .exam-opt { padding: 10px 11px; gap: 9px; }
+      .exam-palette-toggle-btn { display: inline-flex; }
       .exam-palette-pane { display: none; }
-      .exam-palette-pane.mobile-show { display: flex; position: fixed; right: 0; top: 58px; bottom: 60px; width: 285px; z-index: 110; box-shadow: var(--shadow-lg); }
+      .exam-palette-pane.mobile-show {
+        display: flex;
+        position: fixed;
+        right: 0;
+        top: 56px;
+        bottom: 62px;
+        width: min(290px, 86vw);
+        z-index: 110;
+        box-shadow: var(--shadow-lg);
+      }
+      .exam-footer { height: auto; min-height: 54px; padding: 8px 10px; flex-wrap: wrap; gap: 8px; }
+      .exam-footer .btn { padding: 7px 10px; font-size: 12px; }
+    }
+    @media (max-width: 520px) {
+      .btn-desktop-label { display: none; }
+      .quick-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -1138,6 +1285,7 @@
         <div class="sidebar-version">v1.0.0</div>
       </div>
     </aside>
+    <div id="mobile-sidebar-backdrop"></div>
 
     <!-- Main Column -->
     <div class="main-col">
@@ -1165,6 +1313,11 @@
             <span id="drive-status-label">Drive</span>
           </button>
 
+          <button class="btn btn-outline btn-sm btn-desktop-toggle" id="btn-desktop-mode" title="Toggle Desktop / Mobile View">
+            <span id="desktop-mode-icon">🖥️</span>
+            <span class="btn-desktop-label" id="desktop-mode-label">Desktop</span>
+          </button>
+
           <div class="user-chip" id="user-chip">
             <div class="user-avatar" id="user-avatar">EF</div>
             <span class="user-name" id="user-name">User</span>
@@ -1177,6 +1330,7 @@
               </div>
               <button class="dropdown-btn" id="dd-sync-now" type="button">🔄 Force Cloud Sync</button>
               <button class="dropdown-btn" id="dd-connect-drive" type="button">☁️ Connect Google Drive</button>
+              <button class="dropdown-btn" id="dd-desktop-mode" type="button">🖥️ Switch Desktop / Mobile Mode</button>
               <button class="dropdown-btn" id="dd-settings" type="button">⚙️ Settings & Cache</button>
               <button class="dropdown-btn danger" id="dd-logout" type="button">🚪 Sign Out</button>
             </div>
@@ -1655,27 +1809,156 @@
         return needed.filter((k) => !have.has(k));
       },
 
+      /* Split Markdown table row safely without breaking pipes inside $...$ LaTeX math (e.g., $|Z|$) */
+      _splitMdRow(line) {
+        let s = line.trim();
+        if (s.startsWith("|")) s = s.slice(1);
+        if (s.endsWith("|")) s = s.slice(0, -1);
+        const cells = [];
+        let cur = "", inMath = false;
+        for (let i = 0; i < s.length; i++) {
+          const ch = s[i];
+          if (ch === "\\" && i + 1 < s.length) {
+            cur += ch + s[i + 1];
+            i++;
+            continue;
+          }
+          if (ch === "$") { inMath = !inMath; cur += ch; continue; }
+          if (ch === "|" && !inMath) { cells.push(cur.trim()); cur = ""; continue; }
+          cur += ch;
+        }
+        cells.push(cur.trim());
+        return cells;
+      },
+
+      _formatInlineText(str) {
+        const escaped = this.esc(str);
+        return escaped.replace(/(\$[^$]+\$)|(\*\*([^*]+)\*\*)/g, (m, math, bold, inner) => {
+          if (math) return math;
+          return `<strong>${inner}</strong>`;
+        });
+      },
+
+      _sanitizeHtmlTable(rawTableHtml) {
+        const doc = new DOMParser().parseFromString(rawTableHtml, "text/html");
+        const tbl = doc.querySelector("table");
+        if (!tbl) return this.esc(rawTableHtml);
+        const allowed = new Set(["TABLE", "THEAD", "TBODY", "TFOOT", "TR", "TH", "TD", "BR", "B", "STRONG", "I", "EM", "SUB", "SUP", "SPAN"]);
+        const cleanNode = (node) => {
+          if (node.nodeType === 3) return this.esc(node.textContent);
+          if (node.nodeType !== 1) return "";
+          const tag = node.tagName.toUpperCase();
+          const children = Array.from(node.childNodes).map(cleanNode).join("");
+          if (!allowed.has(tag)) return children;
+          const lower = tag.toLowerCase();
+          let attrs = "";
+          if (tag === "TABLE") attrs += ` class="q-table"`;
+          if (tag === "TD" || tag === "TH") {
+            const cs = parseInt(node.getAttribute("colspan"), 10);
+            const rs = parseInt(node.getAttribute("rowspan"), 10);
+            if (cs > 1 && cs <= 20) attrs += ` colspan="${cs}"`;
+            if (rs > 1 && rs <= 20) attrs += ` rowspan="${rs}"`;
+          }
+          if (lower === "br") return "<br>";
+          return `<${lower}${attrs}>${children}</${lower}>`;
+        };
+        return `<div class="table-wrap q-table-wrap">${cleanNode(tbl)}</div>`;
+      },
+
       async renderRichContent(text, testId) {
         if (!text) return "";
-        // Escape HTML safely while preserving intentional inline <svg> diagrams if any
-        const parts = String(text).split(/(\[IMG:[A-Za-z0-9_\-.]+\])/g);
-        const out = [];
-        for (const p of parts) {
-          const m = p.match(/^\[IMG:([A-Za-z0-9_\-.]+)\]$/);
-          if (m) {
-            const key = m[1];
-            const url = await ImageDB.getImageUrl(testId, key);
-            if (url) {
-              this._blobUrls.push(url);
-              out.push(`<img class="exam-img" src="${url}" alt="${this.esc(key)}" data-img-key="${this.esc(key)}" />`);
-            } else {
-              out.push(`<span class="badge badge-gold" style="margin:4px 0;">🖼️ Missing local image: ${this.esc(key)}</span>`);
-            }
+        let src = String(text).replace(/\r\n/g, "\n");
+
+        // 1. Resolve [IMG:key] tokens to placeholders so they work inside paragraphs & table cells
+        const imgMap = new Map();
+        const imgTokens = Array.from(new Set(src.match(/\[IMG:[A-Za-z0-9_\-.]+\]/g) || []));
+        let imgIdx = 0;
+        for (const tok of imgTokens) {
+          const key = tok.slice(5, -1);
+          const url = await ImageDB.getImageUrl(testId, key);
+          const ph = `@@EFIMG_${imgIdx++}@@`;
+          if (url) {
+            this._blobUrls.push(url);
+            imgMap.set(ph, `<img class="exam-img" src="${url}" alt="${this.esc(key)}" data-img-key="${this.esc(key)}" />`);
           } else {
-            out.push(this.esc(p).replace(/\n/g, "<br>"));
+            imgMap.set(ph, `<span class="badge badge-gold" style="margin:4px 0;">🖼️ Missing local image: ${this.esc(key)}</span>`);
+          }
+          src = src.split(tok).join(ph);
+        }
+
+        // 2. Preserve & sanitize any raw HTML <table>...</table> blocks
+        const tblMap = new Map();
+        let tblIdx = 0;
+        src = src.replace(/<table[\s\S]*?<\/table>/gi, (match) => {
+          const ph = `@@EFTBL_${tblIdx++}@@`;
+          tblMap.set(ph, this._sanitizeHtmlTable(match));
+          return `\n${ph}\n`;
+        });
+
+        // 3. Parse Markdown Tables line-by-line (also supports LaTeX pipes like $|Z|$)
+        const lines = src.split("\n");
+        const out = [];
+        const isSepRow = (ln) => /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+\|?\s*$/.test(ln);
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (tblMap.has(line.trim())) {
+            out.push(line.trim());
+            continue;
+          }
+          if (line.includes("|") && i + 1 < lines.length && isSepRow(lines[i + 1])) {
+            const headers = this._splitMdRow(line);
+            i += 2;
+            const bodyRows = [];
+            while (i < lines.length && lines[i].trim() && lines[i].includes("|") && !tblMap.has(lines[i].trim())) {
+              bodyRows.push(this._splitMdRow(lines[i]));
+              i++;
+            }
+            i--;
+
+            const thead = `<thead><tr>${headers.map((h) => `<th>${this._formatInlineText(h)}</th>`).join("")}</tr></thead>`;
+            const tbody = `<tbody>${bodyRows.map((row) =>
+              `<tr>${headers.map((_, ci) => `<td>${this._formatInlineText(row[ci] ?? "")}</td>`).join("")}</tr>`
+            ).join("")}</tbody>`;
+            out.push(`<div class="table-wrap q-table-wrap"><table class="q-table">${thead}${tbody}</table></div>`);
+          } else {
+            out.push(this._formatInlineText(line));
           }
         }
-        return out.join("");
+
+        let html = out.join("<br>").replace(/(<br>)+(<div class="table-wrap q-table-wrap">)/g, "$2").replace(/(<\/div>)(<br>)+/g, "$1");
+        tblMap.forEach((val, ph) => { html = html.split(ph).join(val); });
+        imgMap.forEach((val, ph) => { html = html.split(ph).join(val); });
+        return html;
+      },
+
+      applyDesktopMode(enabled) {
+        const vp = document.getElementById("ef-viewport");
+        const isOn = Boolean(enabled);
+        document.documentElement.classList.toggle("desktop-mode", isOn);
+        localStorage.setItem("ef_desktop_mode", isOn ? "1" : "0");
+        if (vp) {
+          vp.setAttribute(
+            "content",
+            isOn
+              ? "width=1280, initial-scale=0.35, minimum-scale=0.25, maximum-scale=3.0, user-scalable=yes"
+              : "width=device-width, initial-scale=1.0"
+          );
+        }
+        const icon = document.getElementById("desktop-mode-icon");
+        const lbl = document.getElementById("desktop-mode-label");
+        if (icon) icon.textContent = isOn ? "📱" : "🖥️";
+        if (lbl) lbl.textContent = isOn ? "Mobile Fit" : "Desktop";
+
+        document.getElementById("sidebar")?.classList.remove("mobile-open");
+        document.getElementById("mobile-sidebar-backdrop")?.classList.remove("show");
+      },
+
+      toggleDesktopMode() {
+        const next = !document.documentElement.classList.contains("desktop-mode");
+        this.applyDesktopMode(next);
+        this.toast(next ? "Desktop Mode enabled (1280px layout — pinch to zoom)." : "Mobile Fit Mode enabled.", "info");
+        setTimeout(() => window.dispatchEvent(new Event("resize")), 120);
       },
 
       revokeTempUrls() {
@@ -1915,6 +2198,7 @@
           el.classList.toggle("active", el.id === `view-${view}`)
         );
         document.getElementById("sidebar").classList.remove("mobile-open");
+        document.getElementById("mobile-sidebar-backdrop")?.classList.remove("show");
 
         const renderMap = {
           dashboard: () => this.renderDashboard?.(),
@@ -2016,9 +2300,18 @@
           document.getElementById("sidebar").classList.toggle("collapsed");
         });
 
+        const sidebarEl = document.getElementById("sidebar");
+        const sbBackdrop = document.getElementById("mobile-sidebar-backdrop");
         document.getElementById("btn-mobile-menu").addEventListener("click", () => {
-          document.getElementById("sidebar").classList.toggle("mobile-open");
+          const open = sidebarEl.classList.toggle("mobile-open");
+          sbBackdrop?.classList.toggle("show", open);
         });
+        sbBackdrop?.addEventListener("click", () => {
+          sidebarEl.classList.remove("mobile-open");
+          sbBackdrop.classList.remove("show");
+        });
+        document.getElementById("btn-desktop-mode")?.addEventListener("click", () => this.toggleDesktopMode());
+        document.getElementById("dd-desktop-mode")?.addEventListener("click", () => this.toggleDesktopMode());
 
         document.getElementById("btn-theme-toggle").addEventListener("click", () => {
           const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
@@ -2077,6 +2370,7 @@
 
       init() {
         this.applyTheme(this.state.settings.theme || "light");
+        this.applyDesktopMode(localStorage.getItem("ef_desktop_mode") === "1");
         this.bindCoreEvents();
 
         if (localStorage.getItem("ef_guest_mode") === "1") {
@@ -2176,6 +2470,7 @@ Extract every question, shared reading passage, option, final answer, and step-b
    - Explanation diagram: insert [IMG:q{id}_exp].
 5. MARKS GROUP: Tag each question's "marks_group" as "1M", "2M", or "Standard" based on the paper's mark tier so ExamForge can assign section-wise positive/negative marking automatically.
 6. COMPLETENESS: Do not skip, summarize, or truncate any question. Solve and write a crisp technical explanation for every question if solutions are not provided in the PDF.
+7. TABLES (MATCH-THE-FOLLOWING / DATA / TRUTH TABLES): Format every table inside "question", "passage", or "explanation" as a valid GitHub-Flavored Markdown table separated by \n newlines (e.g., "| List I | List II |\n|---|---|\n| P. Item | 1. Value |"). Never use spaces or tabs to align columns.
 
 ### OUTPUT FORMAT
 Return one complete, valid JSON object matching the exact schema above.`;
@@ -2764,7 +3059,7 @@ ${coordsStr}
 
               <div class="field" style="margin-top:12px;">
                 <label>Or Paste Existing Google Drive PDF Share Link (Optional Fallback)</label>
-                <input class="input" id="imp-drive-link" type="url" value="${EF.esc(draft.drivePdfUrl)}" placeholder="[https://drive.google.com/file/d/](https://drive.google.com/file/d/)..." />
+                <input class="input" id="imp-drive-link" type="url" value="${EF.esc(draft.drivePdfUrl)}" placeholder="https://drive.google.com/file/d/..." />
               </div>
 
               ${draft.pdfFile && draft.coordinates ? `
@@ -3018,7 +3313,7 @@ ${coordsStr}
                 prog.textContent = "Uploading PYQ PDF to Google Drive...";
                 const uploaded = await EF.DriveAPI.uploadFile(draft.pdfFile, `${safeSlug}.pdf`, "application/pdf");
                 pdfDriveId = uploaded.id;
-                pdfDriveLink = uploaded.webViewLink || `[https://drive.google.com/file/d/$](https://drive.google.com/file/d/$){uploaded.id}/view`;
+                pdfDriveLink = uploaded.webViewLink || `https://drive.google.com/file/d/${uploaded.id}/view`;
               } else {
                 EF.toast("Google Drive not connected — PDF skipped (you can connect Drive & attach later).", "warn");
               }
@@ -3690,7 +3985,7 @@ ${coordsStr}
 
           <div class="field" style="margin-bottom:14px;">
             <label>Select Exam / Retest Mode</label>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px;">
               <label style="border:1.5px solid var(--border-color); border-radius:10px; padding:10px; cursor:pointer; display:flex; gap:8px; align-items:flex-start;">
                 <input type="radio" name="retest-mode" value="full" ${defaultMode === "full" ? "checked" : ""} />
                 <div><strong style="font-size:13px;">Full Standard</strong><div style="font-size:11.5px; color:var(--text-secondary);">Original question & option order</div></div>
@@ -4112,15 +4407,18 @@ ${coordsStr}
             </div>
 
             <div style="display:flex; align-items:center; gap:10px;">
+              <button class="btn btn-outline btn-sm btn-desktop-toggle" id="ex-desktop-toggle" title="Toggle Desktop / Mobile Layout">
+                ${document.documentElement.classList.contains("desktop-mode") ? "📱" : "🖥️"}
+              </button>
+              <button class="btn btn-outline btn-sm exam-palette-toggle-btn" id="ex-toggle-palette">Palette</button>
               ${exam.reviewMode ? `
-                <span class="badge badge-green" style="font-size:13px; padding:6px 12px;">
-                  Score: ${exam.attemptData.score.toFixed(2)} / ${exam.attemptData.maxScore} (${exam.attemptData.percentage.toFixed(1)}%)
+                <span class="badge badge-green" style="font-size:12.5px; padding:5px 10px;">
+                  ${exam.attemptData.score.toFixed(2)}/${exam.attemptData.maxScore} (${exam.attemptData.percentage.toFixed(1)}%)
                 </span>
-                <button class="btn btn-navy btn-sm" id="ex-close-review">Exit Review</button>
+                <button class="btn btn-navy btn-sm" id="ex-close-review">Exit</button>
               ` : `
                 <div class="exam-timer" id="exam-timer-display">--:--:--</div>
-                <button class="btn btn-outline btn-sm" id="ex-toggle-palette" style="display:none;">Palette</button>
-                <button class="btn btn-success btn-sm" id="ex-submit-btn">Submit Test</button>
+                <button class="btn btn-success btn-sm" id="ex-submit-btn">Submit</button>
               `}
             </div>
           </div>
@@ -4285,14 +4583,14 @@ ${coordsStr}
           </div>
         `;
 
-        // Responsive palette toggle visibility
-        const palToggle = document.getElementById("ex-toggle-palette");
-        if (palToggle && window.innerWidth <= 900) {
-          palToggle.style.display = "inline-flex";
-          palToggle.addEventListener("click", () => {
-            document.getElementById("exam-palette-pane").classList.toggle("mobile-show");
-          });
-        }
+        // Responsive palette toggle & Desktop Mode switch inside Exam Workspace
+        document.getElementById("ex-toggle-palette")?.addEventListener("click", () => {
+          document.getElementById("exam-palette-pane")?.classList.toggle("mobile-show");
+        });
+        document.getElementById("ex-desktop-toggle")?.addEventListener("click", () => {
+          EF.toggleDesktopMode();
+          renderExamWorkspace();
+        });
 
         // Typeset MathJax inside question container
         EF.typesetMath(document.getElementById("exam-q-scroll"));
@@ -4551,7 +4849,7 @@ ${coordsStr}
             <h3>📊 Performance Report — ${EF.esc(att.testTitle)}</h3>
             <button class="btn btn-xs" onclick="EF.closeModal()">✕</button>
           </div>
-          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; text-align:center; margin-bottom:16px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(115px, 1fr)); gap:10px; text-align:center; margin-bottom:16px;">
             <div style="padding:12px; border-radius:11px; background:var(--brand-blue-soft); color:var(--brand-navy);">
               <div style="font-size:20px; font-weight:800;">${att.score} / ${att.maxScore}</div>
               <div style="font-size:11.5px;">Net Score (${att.percentage}%)</div>
@@ -5700,3 +5998,4 @@ ${coordsStr}
   </script>
 </body>
 </html>
+
