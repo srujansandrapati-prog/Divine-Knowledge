@@ -4683,6 +4683,1019 @@ ${coordsStr}
 
     // ==================== [PASTE PART 4 HERE] ====================
 
+
+      /* =====================================================================
+       PART 4: DASHBOARD, ANALYTICS, REVISION, SETTINGS & ABOUT
+       ===================================================================== */
+    (() => {
+      /* Chart.js Theme Helper & Cleanup */
+      function destroyChart(key) {
+        if (EF.charts[key]) {
+          try { EF.charts[key].destroy(); } catch {}
+          delete EF.charts[key];
+        }
+      }
+
+      function chartColors() {
+        const dark = document.documentElement.getAttribute("data-theme") === "dark";
+        return {
+          text: dark ? "#A9BCDA" : "#4E607D",
+          grid: dark ? "rgba(148, 163, 184, 0.14)" : "rgba(148, 163, 184, 0.22)",
+          tooltipBg: dark ? "#0F172A" : "#14223B"
+        };
+      }
+
+      /* Compute Aggregate Metrics */
+      function computeStats() {
+        const tests = EF.state.tests || [];
+        const attempts = EF.state.attempts || [];
+        const bookmarksCount = Object.keys(EF.state.bookmarks || {}).length;
+
+        const bestScore = attempts.length ? Math.max(...attempts.map((a) => Number(a.percentage || 0))) : 0;
+        const totalPracticeHrs = attempts.reduce((s, a) => s + Number(a.totalTimeSec || 0), 0) / 3600;
+
+        // Improvement: compare latest attempt vs earliest attempt (or average of recent 3 vs prior 3)
+        let improvement = 0;
+        let lastDelta = 0;
+        if (attempts.length >= 2) {
+          const ordered = attempts.slice().reverse(); // oldest -> newest
+          lastDelta = Number((ordered[ordered.length - 1].percentage - ordered[ordered.length - 2].percentage).toFixed(1));
+          const firstScore = ordered[0].percentage || 0;
+          const latestScore = ordered[ordered.length - 1].percentage || 0;
+          improvement = Number((latestScore - firstScore).toFixed(1));
+        }
+
+        // Subject-wise accuracy aggregation
+        const subMap = {};
+        let totalCorrect = 0, totalAttempted = 0;
+        attempts.forEach((att) => {
+          const sub = att.subject || "General";
+          if (!subMap[sub]) subMap[sub] = { correct: 0, attempted: 0 };
+          const c = Number(att.correct || 0);
+          const w = Number(att.wrong || 0);
+          subMap[sub].correct += c;
+          subMap[sub].attempted += (c + w);
+          totalCorrect += c;
+          totalAttempted += (c + w);
+        });
+        const overallAccuracy = totalAttempted ? Number(((totalCorrect / totalAttempted) * 100).toFixed(1)) : 0;
+        const subjectBreakdown = Object.entries(subMap)
+          .map(([name, v]) => ({
+            name,
+            acc: v.attempted ? Number(((v.correct / v.attempted) * 100).toFixed(1)) : 0,
+            attempted: v.attempted
+          }))
+          .sort((a, b) => b.attempted - a.attempted);
+
+        // Weekly goal progress
+        const weekAgo = Date.now() - 7 * 86400000;
+        const weeklyCount = attempts.filter((a) => (a.submittedAt || 0) >= weekAgo).length;
+        const weeklyTarget = Math.max(1, (EF.state.settings.dailyGoalTests || 2) * 5);
+        const goalPct = Math.min(100, Math.round((weeklyCount / weeklyTarget) * 100));
+
+        return {
+          totalTests: tests.length,
+          totalAttempts: attempts.length,
+          bestScore,
+          lastDelta,
+          totalPracticeHrs,
+          improvement,
+          bookmarksCount,
+          overallAccuracy,
+          subjectBreakdown,
+          weeklyCount,
+          weeklyTarget,
+          goalPct
+        };
+      }
+
+      /* -----------------------------------------------------------------
+         1. DASHBOARD VIEW
+         ----------------------------------------------------------------- */
+      let dashAttemptLimit = 10;
+
+      EF.renderDashboard = function () {
+        const container = document.getElementById("view-dashboard");
+        const st = computeStats();
+        const verse = EF.getDailyVerse();
+        const attempts = EF.state.attempts || [];
+        const activities = EF.state.activity || [];
+        const latestTest = EF.state.tests[0] || null;
+
+        container.innerHTML = `
+          <!-- Sunrise & Cross Hero Banner (Philippians 4:13) -->
+          <div class="hero-banner">
+            <svg class="hero-bg-art" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <defs>
+                <radialGradient id="dashSunrise" cx="67%" cy="68%" r="42%">
+                  <stop offset="0%" stop-color="#FFF5C8" stop-opacity="0.96"/>
+                  <stop offset="40%" stop-color="#F8C87A" stop-opacity="0.58"/>
+                  <stop offset="100%" stop-color="#E8F0FC" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <rect width="1200" height="220" fill="url(#dashSunrise)" />
+              <!-- Soft distant hills -->
+              <path d="M480 220 Q620 155 760 176 T1040 165 L1200 185 L1200 220 Z" fill="#6B83A8" opacity="0.22" />
+              <path d="M560 220 Q720 135 880 185 T1200 160 L1200 220 Z" fill="#1D335B" opacity="0.48" />
+              <path d="M620 220 Q780 150 930 202 L1200 190 L1200 220 Z" fill="#122240" opacity="0.72" />
+              <!-- Subtle Silhouette Cross on Hilltop -->
+              <g transform="translate(808, 42)" fill="#4A331C" opacity="0.88">
+                <rect x="-4.5" y="0" width="9" height="122" rx="2"/>
+                <rect x="-32" y="25" width="64" height="8.5" rx="2"/>
+              </g>
+            </svg>
+
+            <div class="hero-left">
+              <div class="hero-title">Exam<span>Forge</span></div>
+              <div class="hero-subtitle">Your Personal Engineering Exam Simulator</div>
+              <div class="hero-tagline">Prepare with purpose. Perform with faith. Excel with excellence.</div>
+            </div>
+
+            <div></div>
+
+            <div class="hero-right">
+              <div class="hero-verse">“I can do all things through Christ who strengthens me.”</div>
+              <span class="hero-verse-ref">— Philippians 4:13</span>
+            </div>
+          </div>
+
+          <!-- 5 KPI Summary Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card clickable" id="kpi-tests">
+              <div class="kpi-icon" style="background:var(--brand-gold-soft); color:var(--brand-gold);">🏆</div>
+              <div>
+                <div class="kpi-val">${st.totalTests}</div>
+                <div class="kpi-lbl">Total Tests →</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:var(--brand-green-soft); color:var(--brand-green);">🎯</div>
+              <div>
+                <div class="kpi-val">
+                  ${st.bestScore.toFixed(1)}%
+                  ${st.lastDelta !== 0 ? `<span class="kpi-delta" style="color:${st.lastDelta >= 0 ? "var(--brand-green)" : "var(--brand-red)"};">${st.lastDelta >= 0 ? "↑" : "↓"}${Math.abs(st.lastDelta)}%</span>` : ""}
+                </div>
+                <div class="kpi-lbl">Best Score</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:var(--brand-blue-soft); color:var(--brand-blue);">⏱️</div>
+              <div>
+                <div class="kpi-val">${st.totalPracticeHrs.toFixed(1)} hrs</div>
+                <div class="kpi-lbl">Practice Time</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:var(--brand-gold-soft); color:#E07B18;">📈</div>
+              <div>
+                <div class="kpi-val" style="color:${st.improvement >= 0 ? "var(--brand-green)" : "var(--brand-red)"};">
+                  ${st.improvement >= 0 ? "+" : ""}${st.improvement}%
+                </div>
+                <div class="kpi-lbl">Improvement</div>
+              </div>
+            </div>
+
+            <div class="kpi-card clickable" id="kpi-bookmarks">
+              <div class="kpi-icon" style="background:var(--brand-purple-soft); color:var(--brand-purple);">🔖</div>
+              <div>
+                <div class="kpi-val">${st.bookmarksCount}</div>
+                <div class="kpi-lbl">Bookmarks →</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Middle Row: Performance Chart | Quick Actions | Recent Activity -->
+          <div class="dash-mid-grid">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📊 Your Performance</div>
+                <select class="select" id="dash-att-limit" style="width:auto; padding:5px 10px; font-size:12px;">
+                  <option value="10" ${dashAttemptLimit === 10 ? "selected" : ""}>Last 10 Attempts</option>
+                  <option value="20" ${dashAttemptLimit === 20 ? "selected" : ""}>Last 20 Attempts</option>
+                  <option value="50" ${dashAttemptLimit === 50 ? "selected" : ""}>All Recent (50)</option>
+                </select>
+              </div>
+              <div style="height:220px; position:relative;">
+                <canvas id="dash-perf-chart"></canvas>
+                ${attempts.length === 0 ? `
+                  <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:rgba(255,255,255,0.02); pointer-events:none;">
+                    <div style="font-size:13px; color:var(--text-muted);">Complete your first mock test to see score & accuracy trends.</div>
+                  </div>
+                ` : ""}
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">⚡ Quick Actions</div>
+              </div>
+              <div class="quick-grid">
+                <button class="quick-tile qt-primary" id="qa-start-mock">
+                  <div style="font-size:20px;">▶</div>
+                  <div>
+                    <h4>Start a Mock Test</h4>
+                    <p>${latestTest ? EF.esc(latestTest.title.slice(0, 26)) : "Jump into exam mode →"}</p>
+                  </div>
+                </button>
+                <button class="quick-tile qt-blue" id="qa-ai-import">
+                  <div style="font-size:20px;">✨</div>
+                  <div>
+                    <h4>AI Prompt & Import</h4>
+                    <p>Extract JSON & crop diagrams →</p>
+                  </div>
+                </button>
+                <button class="quick-tile qt-green" id="qa-browse-tests">
+                  <div style="font-size:20px;">📚</div>
+                  <div>
+                    <h4>Browse My Tests</h4>
+                    <p>View collection & PDFs →</p>
+                  </div>
+                </button>
+                <button class="quick-tile qt-purple" id="qa-manage-diagrams">
+                  <div style="font-size:20px;">🖼️</div>
+                  <div>
+                    <h4>Manage Diagrams</h4>
+                    <p>Local WebP cache & Ctrl+V →</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🕒 Recent Activity</div>
+                <button class="btn btn-xs btn-soft" id="dash-view-all-act">View All →</button>
+              </div>
+              <div class="activity-list">
+                ${activities.length === 0 ? `
+                  <div style="font-size:12.5px; color:var(--text-muted); padding:24px 0; text-align:center;">
+                    Your recent imports, completed mocks, and bookmarks will appear here.
+                  </div>
+                ` : activities.slice(0, 7).map((act) => `
+                  <div class="activity-item">
+                    <div class="activity-dot" style="background:var(--brand-${act.color || "blue"}-soft);">${act.icon || "•"}</div>
+                    <div style="min-width:0; flex:1;">
+                      <div style="font-weight:600; color:var(--text-primary); line-height:1.35;">${EF.esc(act.text)}</div>
+                      <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${EF.fmtTimeAgo(act.ts)}</div>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Subject-wise Accuracy | Your Progress (Proverbs 21:5) | Verse of the Day -->
+          <div class="dash-bot-grid">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🎯 Subject-wise Accuracy</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+                <div style="width:136px; height:136px; position:relative; flex-shrink:0;">
+                  <canvas id="dash-subject-donut"></canvas>
+                  <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none;">
+                    <strong style="font-size:18px;">${st.overallAccuracy}%</strong>
+                    <span style="font-size:10.5px; color:var(--text-muted);">Overall</span>
+                  </div>
+                </div>
+                <div style="flex:1; min-width:130px; display:flex; flex-direction:column; gap:7px; font-size:12.5px;">
+                  ${st.subjectBreakdown.length === 0
+                    ? `<span style="color:var(--text-muted);">No attempt data yet.</span>`
+                    : st.subjectBreakdown.slice(0, 4).map((s, idx) => {
+                        const palette = ["#2563EB", "#F59E0B", "#168A5C", "#6D4AFF"];
+                        return `
+                          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                            <span style="display:flex; align-items:center; gap:7px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                              <span style="width:9px; height:9px; border-radius:50%; background:${palette[idx % 4]}; flex-shrink:0;"></span>
+                              ${EF.esc(s.name)}
+                            </span>
+                            <strong>${s.acc}%</strong>
+                          </div>
+                        `;
+                      }).join("")
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div class="card-header">
+                  <div class="card-title">🌟 Your Progress</div>
+                  <span class="badge badge-green">${st.weeklyCount}/${st.weeklyTarget} weekly mocks</span>
+                </div>
+                <div style="padding:12px 14px; border-radius:12px; background:var(--brand-gold-soft); margin-bottom:12px;">
+                  <div style="font-weight:700; font-size:13.5px; color:var(--text-primary);">Keep going!</div>
+                  <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                    Steady daily effort turns hard engineering topics into second nature.
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                  <div style="flex:1; height:10px; border-radius:99px; background:var(--bg-subtle); overflow:hidden; border:1px solid var(--border-color);">
+                    <div style="width:${st.goalPct}%; height:100%; background:linear-gradient(90deg, #168A5C, #34D399); border-radius:99px; transition:width 0.4s ease;"></div>
+                  </div>
+                  <strong style="font-size:12.5px;">${st.goalPct}%</strong>
+                </div>
+              </div>
+              <div style="text-align:center; padding-top:8px; border-top:1px solid var(--border-color);">
+                <div class="serif" style="font-style:italic; font-size:12.5px; color:var(--text-primary);">“The plans of the diligent lead to profit.”</div>
+                <div style="font-size:11.5px; font-weight:700; color:var(--brand-gold); margin-top:3px;">— Proverbs 21:5</div>
+              </div>
+            </div>
+
+            <!-- Offline Rotating Verse of the Day Card -->
+            <div class="votd-card">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="votd-label">✦ Verse of the Day</span>
+                  <span style="font-size:10.5px; color:rgba(255,255,255,0.65);">Offline Ready</span>
+                </div>
+                <div class="votd-quote">“${EF.esc(verse.text)}”</div>
+                <div class="votd-ref">— ${EF.esc(verse.ref)}</div>
+              </div>
+              <div class="votd-note">${EF.esc(verse.note)}</div>
+            </div>
+          </div>
+        `;
+
+        // Bind Dashboard Actions
+        document.getElementById("kpi-tests").addEventListener("click", () => EF.navigate("library"));
+        document.getElementById("kpi-bookmarks").addEventListener("click", () => EF.navigate("revision"));
+        document.getElementById("qa-ai-import").addEventListener("click", () => EF.navigate("importer"));
+        document.getElementById("qa-browse-tests").addEventListener("click", () => EF.navigate("library"));
+        document.getElementById("qa-manage-diagrams").addEventListener("click", () => EF.navigate("diagrams"));
+        document.getElementById("dash-view-all-act").addEventListener("click", () => EF.navigate("analytics"));
+        document.getElementById("qa-start-mock").addEventListener("click", () => {
+          if (latestTest) EF.openTestLaunchFlow(latestTest.id);
+          else EF.navigate("importer");
+        });
+        document.getElementById("dash-att-limit").addEventListener("change", (e) => {
+          dashAttemptLimit = Number(e.target.value) || 10;
+          EF.renderDashboard();
+        });
+
+        // Render Chart 1: Performance Line Chart
+        destroyChart("dashPerf");
+        const cCols = chartColors();
+        const recent = attempts.slice(0, dashAttemptLimit).reverse();
+        const perfCtx = document.getElementById("dash-perf-chart");
+        if (perfCtx && window.Chart) {
+          EF.charts.dashPerf = new Chart(perfCtx, {
+            type: "line",
+            data: {
+              labels: recent.length ? recent.map((_, i) => `#${i + 1}`) : ["#1", "#2", "#3", "#4", "#5"],
+              datasets: [
+                {
+                  label: "Score %",
+                  data: recent.map((a) => a.percentage || 0),
+                  borderColor: "#2563EB",
+                  backgroundColor: "rgba(37, 99, 235, 0.12)",
+                  fill: true,
+                  tension: 0.32,
+                  pointRadius: 4,
+                  borderWidth: 2.4
+                },
+                {
+                  label: "Accuracy %",
+                  data: recent.map((a) => a.accuracy || 0),
+                  borderColor: "#168A5C",
+                  backgroundColor: "transparent",
+                  tension: 0.32,
+                  pointRadius: 4,
+                  borderWidth: 2.2
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: { min: 0, max: 100, ticks: { color: cCols.text, callback: (v) => `${v}%` }, grid: { color: cCols.grid } },
+                x: { ticks: { color: cCols.text }, grid: { display: false } }
+              },
+              plugins: {
+                legend: { labels: { color: cCols.text, usePointStyle: true, boxWidth: 8 } }
+              }
+            }
+          });
+        }
+
+        // Render Chart 2: Subject-wise Accuracy Donut
+        destroyChart("dashDonut");
+        const donutCtx = document.getElementById("dash-subject-donut");
+        if (donutCtx && window.Chart) {
+          const vals = st.subjectBreakdown.length ? st.subjectBreakdown.slice(0, 4).map((s) => s.acc) : [100];
+          const lbls = st.subjectBreakdown.length ? st.subjectBreakdown.slice(0, 4).map((s) => s.name) : ["No data"];
+          const bg = st.subjectBreakdown.length ? ["#2563EB", "#F59E0B", "#168A5C", "#6D4AFF"] : ["#CBD5E1"];
+          EF.charts.dashDonut = new Chart(donutCtx, {
+            type: "doughnut",
+            data: {
+              labels: lbls,
+              datasets: [{ data: vals, backgroundColor: bg, borderWidth: 0, cutout: "70%" }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } }
+            }
+          });
+        }
+      };
+
+      /* -----------------------------------------------------------------
+         2. PERFORMANCE ANALYTICS VIEW (PROVERBS 21:5 + SCATTER PLOT)
+         ----------------------------------------------------------------- */
+      let analyticsSelectedAttemptId = "";
+
+      EF.renderAnalytics = function () {
+        const container = document.getElementById("view-analytics");
+        const attempts = EF.state.attempts || [];
+
+        if (!attempts.length) {
+          container.innerHTML = `
+            <div class="page-header">
+              <div><h2>Performance Analytics</h2><p>Track score progression, section-wise net scores, and question-level pacing bottlenecks.</p></div>
+            </div>
+            <div class="subtle-verse-banner">
+              <em>“The plans of the diligent lead to profit.”</em>
+              <span>Proverbs 21:5</span>
+            </div>
+            <div class="card" style="text-align:center; padding:48px 24px;">
+              <div style="font-size:38px; margin-bottom:10px;">📈</div>
+              <h3 style="font-size:18px; margin-bottom:6px;">No Attempts Recorded Yet</h3>
+              <p style="font-size:13.5px; color:var(--text-secondary); margin-bottom:16px;">Take a mock test to unlock longitudinal charts, section breakdowns, and time-per-question scatter plots.</p>
+              <button class="btn btn-primary" onclick="EF.navigate('library')">Go to Test Library →</button>
+            </div>
+          `;
+          return;
+        }
+
+        if (!analyticsSelectedAttemptId || !attempts.some((a) => a.id === analyticsSelectedAttemptId)) {
+          analyticsSelectedAttemptId = attempts[0].id;
+        }
+        const activeAtt = attempts.find((a) => a.id === analyticsSelectedAttemptId) || attempts[0];
+
+        // Aggregate section stats across selected attempt
+        const secEntries = Object.entries(activeAtt.sectionStats || {});
+
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h2>Performance Analytics</h2>
+              <p>Score & accuracy progression, section breakdowns, and time-per-question pacing analysis.</p>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <select class="select" id="an-attempt-select" style="width:auto; min-width:260px;">
+                ${attempts.map((a) => `
+                  <option value="${a.id}" ${a.id === activeAtt.id ? "selected" : ""}>
+                    ${EF.esc(a.testTitle)} — ${a.percentage}% (${new Date(a.submittedAt).toLocaleDateString()})
+                  </option>
+                `).join("")}
+              </select>
+              <button class="btn btn-primary btn-sm" id="an-review-active">🔍 Review Solutions</button>
+            </div>
+          </div>
+
+          <div class="subtle-verse-banner">
+            <em>“The plans of the diligent lead to profit.”</em>
+            <span>Proverbs 21:5</span>
+          </div>
+
+          <!-- Row 1: Progression Line + Time-per-Question Scatter -->
+          <div class="grid-2" style="margin-bottom:18px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📈 Score & Accuracy Progression (All Attempts)</div>
+              </div>
+              <div style="height:260px;"><canvas id="an-line-chart"></canvas></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">⏱️ Time-per-Question Scatter Plot (Pacing Bottlenecks)</div>
+                <span class="badge badge-neutral" style="font-size:11px;">🟢 Correct · 🔴 Wrong · ⚪ Skipped</span>
+              </div>
+              <div style="height:260px;"><canvas id="an-scatter-chart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Row 2: Section-wise Net Score Bar + Section Table -->
+          <div class="grid-2" style="margin-bottom:18px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📊 Section-wise Accuracy & Score %</div>
+              </div>
+              <div style="height:240px;"><canvas id="an-sec-bar"></canvas></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📋 Section Breakdown — ${EF.esc(activeAtt.testTitle)}</div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Section</th><th>Correct</th><th>Wrong</th><th>Accuracy</th><th>Net Score</th></tr>
+                  </thead>
+                  <tbody>
+                    ${secEntries.map(([sec, s]) => {
+                      const att = (s.correct || 0) + (s.wrong || 0);
+                      const acc = att ? ((s.correct / att) * 100).toFixed(1) : "0.0";
+                      return `
+                        <tr>
+                          <td><strong>${EF.esc(sec)}</strong></td>
+                          <td style="color:var(--brand-green); font-weight:700;">${s.correct}</td>
+                          <td style="color:var(--brand-red); font-weight:700;">${s.wrong}</td>
+                          <td>${acc}%</td>
+                          <td><strong>${Number(s.score).toFixed(2)} / ${s.maxScore}</strong></td>
+                        </tr>
+                      `;
+                    }).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attempt History Log -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🗂️ Attempt History (${attempts.length})</div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Test Name</th>
+                    <th>Mode</th>
+                    <th>Score</th>
+                    <th>Accuracy</th>
+                    <th>Time</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${attempts.map((a) => {
+                    const mins = Math.floor((a.totalTimeSec || 0) / 60);
+                    return `
+                      <tr>
+                        <td><strong>${EF.esc(a.testTitle)}</strong></td>
+                        <td><span class="badge badge-neutral">${EF.esc((a.mode || "full").toUpperCase())}</span></td>
+                        <td><strong>${a.score} / ${a.maxScore}</strong> (${a.percentage}%)</td>
+                        <td><span class="badge ${a.accuracy >= 75 ? "badge-green" : a.accuracy >= 50 ? "badge-gold" : "badge-red"}">${a.accuracy}%</span></td>
+                        <td>${mins} min</td>
+                        <td style="color:var(--text-secondary); font-size:12px;">${new Date(a.submittedAt).toLocaleString()}</td>
+                        <td>
+                          <button class="btn btn-soft btn-xs an-open-rev" data-aid="${a.id}">Review</button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        document.getElementById("an-attempt-select").addEventListener("change", (e) => {
+          analyticsSelectedAttemptId = e.target.value;
+          EF.renderAnalytics();
+        });
+        document.getElementById("an-review-active").addEventListener("click", () => EF.openAttemptReview(activeAtt.id));
+        container.querySelectorAll(".an-open-rev").forEach((b) =>
+          b.addEventListener("click", () => EF.openAttemptReview(b.dataset.aid))
+        );
+
+        const cCols = chartColors();
+
+        // 1. Score & Accuracy Progression Chart
+        destroyChart("anLine");
+        const ordered = attempts.slice().reverse();
+        EF.charts.anLine = new Chart(document.getElementById("an-line-chart"), {
+          type: "line",
+          data: {
+            labels: ordered.map((a, i) => `#${i + 1} ${a.testTitle.slice(0, 12)}`),
+            datasets: [
+              { label: "Score %", data: ordered.map((a) => a.percentage || 0), borderColor: "#2563EB", backgroundColor: "rgba(37,99,235,0.12)", fill: true, tension: 0.3 },
+              { label: "Accuracy %", data: ordered.map((a) => a.accuracy || 0), borderColor: "#168A5C", tension: 0.3 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { min: 0, max: 100, ticks: { color: cCols.text, callback: (v) => `${v}%` }, grid: { color: cCols.grid } },
+              x: { ticks: { color: cCols.text, maxRotation: 25 }, grid: { display: false } }
+            },
+            plugins: { legend: { labels: { color: cCols.text } } }
+          }
+        });
+
+        // 2. Time-per-Question Scatter Plot
+        destroyChart("anScatter");
+        const resList = activeAtt.results || [];
+        const ptsCorrect = [], ptsWrong = [], ptsSkip = [];
+        resList.forEach((r) => {
+          const pt = { x: r.qNum, y: Number(r.timeSec || 0), sec: r.section, qId: r.qId };
+          if (r.status === "correct") ptsCorrect.push(pt);
+          else if (r.status === "wrong") ptsWrong.push(pt);
+          else ptsSkip.push(pt);
+        });
+
+        EF.charts.anScatter = new Chart(document.getElementById("an-scatter-chart"), {
+          type: "scatter",
+          data: {
+            datasets: [
+              { label: "Correct", data: ptsCorrect, backgroundColor: "#168A5C", pointRadius: 6 },
+              { label: "Wrong", data: ptsWrong, backgroundColor: "#D63C4B", pointRadius: 6 },
+              { label: "Unattempted", data: ptsSkip, backgroundColor: "#94A3B8", pointRadius: 5 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { title: { display: true, text: "Question #", color: cCols.text }, ticks: { color: cCols.text, stepSize: 1 }, grid: { color: cCols.grid } },
+              y: { title: { display: true, text: "Time Spent (Seconds)", color: cCols.text }, beginAtZero: true, ticks: { color: cCols.text }, grid: { color: cCols.grid } }
+            },
+            plugins: {
+              legend: { labels: { color: cCols.text } },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const p = ctx.raw;
+                    return `${ctx.dataset.label} · Q${p.x} (${p.sec}): ${p.y}s`;
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        // 3. Section-wise Bar Chart
+        destroyChart("anSecBar");
+        EF.charts.anSecBar = new Chart(document.getElementById("an-sec-bar"), {
+          type: "bar",
+          data: {
+            labels: secEntries.map(([sec]) => sec),
+            datasets: [
+              {
+                label: "Accuracy %",
+                data: secEntries.map(([, s]) => {
+                  const att = (s.correct || 0) + (s.wrong || 0);
+                  return att ? Number(((s.correct / att) * 100).toFixed(1)) : 0;
+                }),
+                backgroundColor: "#168A5C",
+                borderRadius: 6
+              },
+              {
+                label: "Net Score %",
+                data: secEntries.map(([, s]) => s.maxScore ? Number(((Math.max(0, s.score) / s.maxScore) * 100).toFixed(1)) : 0),
+                backgroundColor: "#2563EB",
+                borderRadius: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { min: 0, max: 100, ticks: { color: cCols.text, callback: (v) => `${v}%` }, grid: { color: cCols.grid } },
+              x: { ticks: { color: cCols.text }, grid: { display: false } }
+            },
+            plugins: { legend: { labels: { color: cCols.text } } }
+          }
+        });
+      };
+
+      /* -----------------------------------------------------------------
+         3. BOOKMARKS & WEAK-AREA REVISION VIEW (ISAIAH 40:31)
+         ----------------------------------------------------------------- */
+      let revTab = "bookmarks";
+
+      EF.renderRevision = async function () {
+        const container = document.getElementById("view-revision");
+        const bmList = Object.values(EF.state.bookmarks || {}).sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+
+        // Build weak-area list (incorrect questions across attempts)
+        const wrongMap = new Map();
+        (EF.state.attempts || []).forEach((att) => {
+          (att.results || []).forEach((r) => {
+            if (r.status === "wrong") {
+              const k = `${att.testId}::${r.qId}`;
+              const prev = wrongMap.get(k);
+              wrongMap.set(k, {
+                testId: att.testId,
+                testTitle: att.testTitle,
+                qId: r.qId,
+                section: r.section,
+                wrongCount: (prev?.wrongCount || 0) + 1
+              });
+            }
+          });
+        });
+        const weakList = Array.from(wrongMap.values()).sort((a, b) => b.wrongCount - a.wrongCount);
+
+        const activeItems = revTab === "bookmarks" ? bmList : weakList;
+
+        // Resolve full question objects and rich content
+        EF.revokeTempUrls();
+        const cardsHtml = [];
+        for (const item of activeItems.slice(0, 40)) {
+          const test = EF.state.tests.find((t) => t.id === item.testId);
+          const q = test?.questions?.find((x) => String(x.id) === String(item.qId));
+          if (!test || !q) continue;
+
+          const qHtml = await EF.renderRichContent(q.question, test.id);
+          const expHtml = q.explanation ? await EF.renderRichContent(q.explanation, test.id) : "No explanation saved.";
+          const ansText = q.type === "MCQ"
+            ? String.fromCharCode(65 + Number(q.answer))
+            : q.type === "MSQ"
+              ? (Array.isArray(q.answer) ? q.answer : [q.answer]).map((i) => String.fromCharCode(65 + Number(i))).join(", ")
+              : Array.isArray(q.answer) ? `${q.answer[0]} to ${q.answer[1]}` : String(q.answer);
+
+          cardsHtml.push(`
+            <div class="card" style="margin-bottom:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                <div style="display:flex; gap:7px; flex-wrap:wrap; align-items:center;">
+                  <span class="badge badge-blue">${EF.esc(test.title)}</span>
+                  <span class="badge badge-neutral">Q${q.id} · ${EF.esc(q.section || "General")}</span>
+                  <span class="badge badge-purple">${q.type}</span>
+                  ${item.wrongCount ? `<span class="badge badge-red">Missed ${item.wrongCount}×</span>` : ""}
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-soft btn-xs rev-launch-drill" data-tid="${test.id}" data-mode="${revTab === "bookmarks" ? "bookmarked" : "incorrect"}">
+                    ▶ Practice ${revTab === "bookmarks" ? "Bookmarked" : "Incorrect"} Set
+                  </button>
+                  ${revTab === "bookmarks" ? `<button class="btn btn-danger-soft btn-xs rev-unbookmark" data-tid="${test.id}" data-qid="${q.id}">Remove</button>` : ""}
+                </div>
+              </div>
+
+              <div style="font-size:14.5px; line-height:1.65; margin-bottom:12px;">${qHtml}</div>
+
+              <details style="background:var(--bg-subtle); border:1px solid var(--border-color); border-radius:10px; padding:10px 14px;">
+                <summary style="cursor:pointer; font-weight:700; font-size:13px; color:var(--brand-blue);">Show Answer & Detailed Explanation</summary>
+                <div style="margin-top:10px; font-size:13.5px; line-height:1.6;">
+                  <div style="margin-bottom:6px;"><strong>Correct Answer:</strong> <span class="badge badge-green mono">${EF.esc(ansText)}</span></div>
+                  <div>${expHtml}</div>
+                </div>
+              </details>
+            </div>
+          `);
+        }
+
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h2>Bookmarks & Weak-Area Revision</h2>
+              <p>Turn mistakes and saved tough problems into targeted mastery drills.</p>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn ${revTab === "bookmarks" ? "btn-primary" : "btn-outline"} btn-sm" id="rev-tab-bm">🔖 Bookmarks (${bmList.length})</button>
+              <button class="btn ${revTab === "weak" ? "btn-primary" : "btn-outline"} btn-sm" id="rev-tab-weak">🎯 Weak Areas (${weakList.length})</button>
+            </div>
+          </div>
+
+          <div class="subtle-verse-banner">
+            <em>“Those who hope in the Lord will renew their strength.”</em>
+            <span>Isaiah 40:31</span>
+          </div>
+
+          ${cardsHtml.length ? cardsHtml.join("") : `
+            <div class="card" style="text-align:center; padding:44px 20px;">
+              <div style="font-size:34px; margin-bottom:8px;">${revTab === "bookmarks" ? "🔖" : "💪"}</div>
+              <h3 style="font-size:17px; margin-bottom:5px;">${revTab === "bookmarks" ? "No Bookmarked Questions Yet" : "No Incorrect Questions Logged"}</h3>
+              <p style="font-size:13px; color:var(--text-secondary);">
+                ${revTab === "bookmarks"
+                  ? "Click Bookmark (or press B) during any mock test or review session to save key questions here."
+                  : "Incorrectly answered questions from your timed mock tests will automatically appear here for targeted drills."}
+              </p>
+            </div>
+          `}
+        `;
+
+        EF.typesetMath(container);
+
+        document.getElementById("rev-tab-bm").addEventListener("click", () => { revTab = "bookmarks"; EF.renderRevision(); });
+        document.getElementById("rev-tab-weak").addEventListener("click", () => { revTab = "weak"; EF.renderRevision(); });
+
+        container.querySelectorAll(".rev-launch-drill").forEach((b) =>
+          b.addEventListener("click", () => EF.openTestLaunchFlow(b.dataset.tid, b.dataset.mode))
+        );
+        container.querySelectorAll(".rev-unbookmark").forEach((b) =>
+          b.addEventListener("click", async () => {
+            await EF.toggleBookmark(b.dataset.tid, b.dataset.qid);
+            EF.renderRevision();
+          })
+        );
+      };
+
+      /* -----------------------------------------------------------------
+         4. SETTINGS & STORAGE / BACKUP MANAGER
+         ----------------------------------------------------------------- */
+      EF.renderSettings = async function () {
+        const container = document.getElementById("view-settings");
+        const idbStats = await EF.ImageDB.getAllStats();
+        const s = EF.state.settings;
+
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h2>Settings, Cloud Sync & Local Cache</h2>
+              <p>Manage exam defaults, Google Drive vault connection, IndexedDB WebP image cache, and full JSON backups.</p>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:18px;">
+            <div class="card">
+              <div class="card-header"><div class="card-title">⚙️ Exam & Display Preferences</div></div>
+              <div style="display:flex; flex-direction:column; gap:14px;">
+                <div class="field">
+                  <label>Theme (Exam Mode always remains Low-Strain Light)</label>
+                  <select class="select" id="set-theme">
+                    <option value="light" ${s.theme === "light" ? "selected" : ""}>Low-Strain Light (Recommended)</option>
+                    <option value="dark" ${s.theme === "dark" ? "selected" : ""}>Dark Mode</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Default Mock Duration (Minutes)</label>
+                  <input class="input" id="set-duration" type="number" min="10" max="360" value="${s.defaultDurationMin || 180}" />
+                </div>
+                <div class="field">
+                  <label>Daily Study Target (Mocks / Day)</label>
+                  <input class="input" id="set-daily-goal" type="number" min="1" max="10" value="${s.dailyGoalTests || 2}" />
+                </div>
+                <button class="btn btn-primary btn-sm" id="btn-save-settings" style="align-self:flex-start;">Save Preferences</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title">☁️ Cloud Sync & Google Drive Vault</div></div>
+              <div style="display:flex; flex-direction:column; gap:12px; font-size:13.5px;">
+                <div style="padding:12px; border-radius:10px; background:var(--bg-subtle); border:1px solid var(--border-color);">
+                  <strong>Account:</strong> ${EF.esc(EF.state.user?.displayName || "Guest")}
+                  <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                    ${EF.state.isGuest ? "Running in Local Guest Mode (Sign out to link Firebase Cloud Sync)" : `Firebase UID: ${EF.esc(EF.state.user?.uid || "")}`}
+                  </div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button class="btn btn-soft btn-sm" id="set-sync-now">🔄 Sync Firestore Now</button>
+                  <button class="btn btn-outline btn-sm" id="set-connect-drive">☁️ ${EF.DriveAPI.isConnected() ? "Reconnect Google Drive" : "Connect Google Drive"}</button>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); line-height:1.55;">
+                  Zero-Cost Architecture: Firestore stores lightweight JSON tests, scores, and <code>coordinates.json</code>. Google Drive (<code>drive.file</code>) holds master PYQ PDFs. Cropped WebP diagrams stay in your device's IndexedDB.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><div class="card-title">💾 Local IndexedDB WebP Cache</div></div>
+              <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
+                Currently storing <strong>${idbStats.count}</strong> compressed WebP diagram(s) using <strong>${EF.fmtBytes(idbStats.totalBytes)}</strong> of local browser storage.
+              </p>
+              <button class="btn btn-danger-soft btn-sm" id="btn-clear-idb">🗑️ Clear All Cached Diagrams</button>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title">📦 Full Data Backup & Restore (JSON)</div></div>
+              <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
+                Export all tests, marking rules, attempts, bookmarks, and coordinates to a single portable JSON file.
+              </p>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" id="btn-export-backup">⬇️ Export Full Backup</button>
+                <input type="file" id="in-import-backup" accept=".json" class="hidden" />
+                <button class="btn btn-soft btn-sm" id="btn-import-backup">⬆️ Restore Backup</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById("btn-save-settings").addEventListener("click", async () => {
+          const theme = document.getElementById("set-theme").value;
+          EF.state.settings.defaultDurationMin = Math.max(10, Number(document.getElementById("set-duration").value) || 180);
+          EF.state.settings.dailyGoalTests = Math.max(1, Number(document.getElementById("set-daily-goal").value) || 2);
+          EF.applyTheme(theme);
+          await EF.saveSettings();
+          EF.toast("Preferences saved!", "success");
+        });
+
+        document.getElementById("set-sync-now").addEventListener("click", async () => {
+          await EF.syncFromCloud();
+          EF.toast("Cloud sync complete.", "success");
+          EF.renderSettings();
+        });
+
+        document.getElementById("set-connect-drive").addEventListener("click", async () => {
+          try { await EF.DriveAPI.connectInteractive(); EF.renderSettings(); }
+          catch (e) { EF.toast(e.message, "warn"); }
+        });
+
+        document.getElementById("btn-clear-idb").addEventListener("click", async () => {
+          if (!confirm("Clear all locally cached WebP diagrams? Your tests in Firestore & PDFs/coordinates on Drive remain safe.")) return;
+          await EF.ImageDB.clearAll();
+          EF.toast("Local diagram cache cleared.", "info");
+          EF.renderSettings();
+        });
+
+        document.getElementById("btn-export-backup").addEventListener("click", () => {
+          const payload = {
+            exportedAt: new Date().toISOString(),
+            version: "1.0.0",
+            tests: EF.state.tests,
+            attempts: EF.state.attempts,
+            bookmarks: EF.state.bookmarks,
+            settings: EF.state.settings
+          };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+          const u = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = u;
+          a.download = `ExamForge_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(u), 4000);
+        });
+
+        const restoreIn = document.getElementById("in-import-backup");
+        document.getElementById("btn-import-backup").addEventListener("click", () => restoreIn.click());
+        restoreIn.addEventListener("change", async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          try {
+            const data = JSON.parse(await f.text());
+            if (Array.isArray(data.tests)) {
+              for (const t of data.tests) await EF.saveTest(t);
+            }
+            if (Array.isArray(data.attempts)) {
+              for (const a of data.attempts) {
+                if (!EF.state.attempts.some((x) => x.id === a.id)) await EF.saveAttempt(a);
+              }
+            }
+            if (data.bookmarks && typeof data.bookmarks === "object") {
+              EF.state.bookmarks = { ...EF.state.bookmarks, ...data.bookmarks };
+              EF.saveLocalSnapshot();
+            }
+            EF.toast("Backup restored & synced!", "success");
+            EF.navigate("dashboard");
+          } catch (err) {
+            EF.toast(`Restore failed: ${err.message}`, "error");
+          }
+        });
+      };
+
+      /* -----------------------------------------------------------------
+         5. ABOUT & SHORTCUTS VIEW
+         ----------------------------------------------------------------- */
+      EF.renderAbout = function () {
+        const container = document.getElementById("view-about");
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h2>About ExamForge</h2>
+              <p>Prepare with purpose. Perform with faith. Excel with excellence.</p>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><div class="card-title">🏗️ Zero-Cost Serverless Architecture</div></div>
+              <ul style="padding-left:18px; line-height:1.85; font-size:13.5px; color:var(--text-secondary);">
+                <li><strong>Single-File Static Frontend:</strong> Runs directly on GitHub Pages with zero server bills.</li>
+                <li><strong>Firebase Auth & Firestore:</strong> Syncs lightweight JSON tests, dynamic section marking schemes, attempts, bookmarks, and <code>coordinates.json</code> across devices.</li>
+                <li><strong>Google Drive Vault (<code>drive.file</code>):</strong> Stores master PYQ PDFs cleanly without touching database storage caps.</li>
+                <li><strong>IndexedDB WebP Cache + PDF.js Auto-Crop:</strong> Caches cropped diagrams and image options locally for instant loading, with 1-click browser re-cropping when switching devices.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title">⌨️ Exam Workspace Ergonomics & Shortcuts</div></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Action</th><th>Shortcut / Control</th></tr></thead>
+                  <tbody>
+                    <tr><td>Select / Toggle Option A–D</td><td><code>A</code> <code>B</code> <code>C</code> <code>D</code> or <code>1</code>–<code>4</code></td></tr>
+                    <tr><td>Strike-through Option (Elimination)</td><td><strong>Right-Click</strong> any option</td></tr>
+                    <tr><td>Next / Previous Question</td><td><code>→</code> / <code>←</code> or <code>N</code> / <code>P</code></td></tr>
+                    <tr><td>Mark / Unmark for Review</td><td><code>M</code></td></tr>
+                    <tr><td>Bookmark Question</td><td><code>B</code></td></tr>
+                    <tr><td>Clear Response</td><td><code>C</code></td></tr>
+                    <tr><td>Global Test Search</td><td><code>Ctrl + K</code></td></tr>
+                    <tr><td>Paste Screenshot in Diagram Manager</td><td>Click slot + <code>Ctrl + V</code></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      };
+    })();
+
+
     EF.init();
   </script>
 </body>
