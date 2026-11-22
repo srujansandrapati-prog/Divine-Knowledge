@@ -2099,6 +2099,992 @@
 
     // ==================== [PASTE PART 2 HERE] ====================
 
+        /* =====================================================================
+       PART 2: RICECO AI PROMPT STUDIO, DYNAMIC MARKING & TEST IMPORTER
+       ===================================================================== */
+    (() => {
+      /* -----------------------------------------------------------------
+         RICECO PROMPT 1: QUESTIONS, OPTIONS, ANSWERS & EXPLANATIONS JSON
+         ----------------------------------------------------------------- */
+      const PROMPT_1_JSON = `### ROLE
+You are a senior engineering exam digitization specialist (GATE, UPSC ESE, TSPSC) and strict JSON compiler.
+
+### INSTRUCTIONS
+Extract every question, shared reading passage, option, final answer, and step-by-step explanation from the attached PYQ question paper (and answer key/solutions if provided) into ONE valid, strictly formatted JSON object compatible with ExamForge.
+
+### CONTEXT
+- Engineering questions contain mathematical equations, electrical/mechanical units, multi-column text, linked passages, diagrams, and image-based options.
+- Diagrams will be cropped separately and matched automatically by exact index keys using [IMG:key] tokens.
+
+### EXAMPLES (EXACT SCHEMA TO FOLLOW)
+{
+  "title": "GATE EE 2024 Full Mock",
+  "exam": "GATE EE",
+  "subject": "Electrical Engineering",
+  "duration_minutes": 180,
+  "questions": [
+    {
+      "id": 1,
+      "section": "General Aptitude",
+      "type": "MCQ",
+      "marks_group": "1M",
+      "passage_id": "",
+      "passage": "",
+      "question": "Find the value of $\\\\int_0^1 x^2 \\\\, dx$.",
+      "options": ["$\\\\frac{1}{2}$", "$\\\\frac{1}{3}$", "$\\\\frac{1}{4}$", "$1$"],
+      "answer": 1,
+      "explanation": "Integrating $x^2$ gives $\\\\left[\\\\frac{x^3}{3}\\\\right]_0^1 = \\\\frac{1}{3}$."
+    },
+    {
+      "id": 2,
+      "section": "Core Electrical",
+      "type": "MSQ",
+      "marks_group": "2M",
+      "passage_id": "p1",
+      "passage": "Common Data for Q2–Q3: Consider the network shown below. [IMG:p1]",
+      "question": "Referring to the circuit [IMG:q2], which of the following statements are TRUE?",
+      "options": ["[IMG:q2_optA]", "[IMG:q2_optB]", "[IMG:q2_optC]", "[IMG:q2_optD]"],
+      "answer": [0, 2],
+      "explanation": "Applying KVL and verifying waveform symmetry confirms options A and C. [IMG:q2_exp]"
+    },
+    {
+      "id": 3,
+      "section": "Core Electrical",
+      "type": "NAT",
+      "marks_group": "2M",
+      "passage_id": "p1",
+      "passage": "Common Data for Q2–Q3: Consider the network shown below. [IMG:p1]",
+      "question": "Calculate the steady-state RMS current (in A), rounded to two decimal places.",
+      "options": [],
+      "answer": [4.45, 4.55],
+      "explanation": "Using $I_{rms} = \\\\frac{V_{rms}}{|Z|} = \\\\frac{230}{51.1} \\\\approx 4.50\\\\text{ A}$."
+    }
+  ]
+}
+
+### CONSTRAINTS
+1. STRICT JSON ONLY: Output inside a single \`\`\`json code block with zero trailing commas or commentary outside the block.
+2. LATEX ESCAPING: Wrap inline math in $...$ and display math in $$...$$. Double-escape EVERY backslash inside JSON strings (e.g., "\\\\frac", "\\\\Omega", "\\\\theta", "\\\\sqrt").
+3. QUESTION TYPES & ANSWERS:
+   - "MCQ": options has 4 strings; answer is a single 0-based integer (0=A, 1=B, 2=C, 3=D).
+   - "MSQ": options has 4 strings; answer is a sorted array of 0-based integers (e.g., [0, 2]).
+   - "NAT": options MUST be []; answer MUST be a 2-number inclusive range [min, max] (if official key gives a single value like 4.5, add ±1% tolerance or exact [4.5, 4.5]).
+4. IMAGE PLACEHOLDERS (CRITICAL):
+   - Question diagram: insert [IMG:q{id}] (e.g., [IMG:q12]). Multiple figures in one question: [IMG:q12_1], [IMG:q12_2].
+   - Image options: put "[IMG:q{id}_optA]", "[IMG:q{id}_optB]", "[IMG:q{id}_optC]", "[IMG:q{id}_optD]" directly inside the "options" array (append any text label after the token if present).
+   - Shared passage diagram: insert [IMG:p{n}] and repeat the same passage_id and passage text on every dependent question.
+   - Explanation diagram: insert [IMG:q{id}_exp].
+5. MARKS GROUP: Tag each question's "marks_group" as "1M", "2M", or "Standard" based on the paper's mark tier so ExamForge can assign section-wise positive/negative marking automatically.
+6. COMPLETENESS: Do not skip, summarize, or truncate any question. Solve and write a crisp technical explanation for every question if solutions are not provided in the PDF.
+
+### OUTPUT FORMAT
+Return one complete, valid JSON object matching the exact schema above.`;
+
+      /* -----------------------------------------------------------------
+         RICECO PROMPT 2: DIAGRAM CROPPER (.ZIP + COORDINATES.JSON)
+         ----------------------------------------------------------------- */
+      const PROMPT_2_CROP = `### ROLE
+You are a precision document computer-vision engineer using Python (PyMuPDF / fitz + Pillow) to crop technical diagrams and image options from engineering exam PDFs.
+
+### INSTRUCTIONS
+Inspect the attached PYQ PDF and (if provided) the extracted questions JSON. Write and run a Python script to:
+1. Render every PDF page containing figures at high resolution (250–300 DPI).
+2. Accurately crop EVERY question diagram, image-based option (A/B/C/D), passage figure, and solution diagram with a clean ~8px white margin and zero overlapping surrounding text.
+3. Save all cropped figures as crisp PNG files inside a single downloadable ZIP archive named: examforge_diagrams.zip
+4. Simultaneously generate and provide a downloadable file named: coordinates.json containing the exact page number (1-based) and normalized 0–1000 bounding box [x1, y1, x2, y2] for every cropped image.
+
+### CONTEXT
+ExamForge caches the cropped images locally in the browser (IndexedDB) and saves only the lightweight coordinates.json + master PDF in Google Drive so switching devices can automatically re-crop the exact same figures without using cloud database storage.
+
+### STRICT FILENAME & KEY NAMING CONVENTION
+Every PNG filename inside examforge_diagrams.zip AND every key inside coordinates.json MUST match the [IMG:key] tokens from Prompt 1:
+- Main question diagram -> q{id}.png   (key: "q{id}", e.g., "q12")
+- Extra diagram in same question -> q{id}_2.png (key: "q12_2")
+- Image options -> q{id}_optA.png, q{id}_optB.png, q{id}_optC.png, q{id}_optD.png
+- Shared passage figure -> p{n}.png    (key: "p1")
+- Explanation diagram -> q{id}_exp.png (key: "q12_exp")
+
+### EXAMPLES (EXACT coordinates.json FORMAT)
+{
+  "q2": { "page": 1, "bbox": [112, 340, 488, 595] },
+  "q2_optA": { "page": 1, "bbox": [105, 615, 285, 730] },
+  "q2_optB": { "page": 1, "bbox": [310, 615, 490, 730] },
+  "q2_optC": { "page": 1, "bbox": [105, 745, 285, 860] },
+  "q2_optD": { "page": 1, "bbox": [310, 745, 490, 860] },
+  "p1": { "page": 1, "bbox": [110, 140, 490, 310] }
+}
+
+### CONSTRAINTS
+1. Coordinate normalization MUST be integers in the range 0 to 1000:
+   x1 = int(left / page_width * 1000), y1 = int(top / page_height * 1000),
+   x2 = int(right / page_width * 1000), y2 = int(bottom / page_height * 1000).
+2. Visually verify cropped bounding boxes before zipping so circuit labels, axes, and option symbols are never clipped.
+3. Place all PNGs directly at the root of examforge_diagrams.zip (flat structure, no nested subfolders).
+4. Keep background clean white (#FFFFFF) for transparent/vector PDF drawings.
+
+### OUTPUT FORMAT
+Provide direct download links for BOTH files:
+1. examforge_diagrams.zip
+2. coordinates.json
+Followed by a concise checklist table mapping each key -> page number -> status.`;
+
+      EF.PROMPTS = {
+        jsonExtractor: PROMPT_1_JSON,
+        diagramCropper: PROMPT_2_CROP
+      };
+
+      /* Helper for Part 3 Cross-Device Recovery Modal */
+      EF.getRecropPrompt = (test) => {
+        const coordsStr = JSON.stringify(test.coordinates || {}, null, 2);
+        return `### ROLE
+You are a Python PDF-cropping assistant restoring cached exam diagrams for ExamForge.
+
+### INSTRUCTIONS
+Using the attached PYQ PDF and the exact normalized (0–1000) bounding-box coordinates below, run Python (PyMuPDF/fitz) to render each referenced page at 250 DPI, crop each [x1, y1, x2, y2] box, save each as <key>.png (white background), and bundle them into one downloadable ZIP file named: examforge_diagrams.zip.
+
+### COORDINATES (page is 1-based; bbox is [x1, y1, x2, y2] normalized 0..1000)
+\`\`\`json
+${coordsStr}
+\`\`\`
+
+### CONSTRAINTS
+- Do NOT alter filenames or keys.
+- Place all PNG files directly at the root of examforge_diagrams.zip.
+- Provide the download link for examforge_diagrams.zip immediately.`;
+      };
+
+      /* -----------------------------------------------------------------
+         IMPORTER STAGING STATE
+         ----------------------------------------------------------------- */
+      const draft = {
+        rawJson: "",
+        parsedTest: null,
+        parseError: "",
+        markingRules: {},      // { "Section||TYPE||marksGroup": { section, type, marksGroup, pos, neg, count } }
+        stagedImages: new Map(), // key -> { fileOrBlob, name, size, previewUrl }
+        coordinates: null,
+        coordsFilename: "",
+        pdfFile: null,
+        drivePdfUrl: "",
+        drivePdfId: "",
+        driveCoordsId: ""
+      };
+
+      /* Smart filename-to-key mapper */
+      function normalizeImageKey(rawName, requiredKeys = []) {
+        const base = rawName.split(/[\\/]/).pop().replace(/\.[^.]+$/, "").trim();
+        const reqLowerMap = new Map(requiredKeys.map((k) => [k.toLowerCase(), k]));
+
+        if (reqLowerMap.has(base.toLowerCase())) return reqLowerMap.get(base.toLowerCase());
+
+        // Handle "12" -> "q12" or "Q12" -> "q12"
+        const clean = base.replace(/\s+/g, "_");
+        if (/^\d+$/.test(clean) && reqLowerMap.has(`q${clean}`)) {
+          return reqLowerMap.get(`q${clean}`);
+        }
+        // Handle option shorthands like "12_a", "q12_a", "Q12-opt-b"
+        const optMatch = clean.match(/^q?(\d+)[_-]?(?:opt)?[_-]?([a-dA-D])$/);
+        if (optMatch) {
+          const candidate = `q${optMatch[1]}_opt${optMatch[2].toUpperCase()}`;
+          if (reqLowerMap.has(candidate.toLowerCase())) return reqLowerMap.get(candidate.toLowerCase());
+          return candidate;
+        }
+        // Handle solution/explanation shorthands like "12_sol", "q12_explanation"
+        const expMatch = clean.match(/^q?(\d+)[_-]?(?:exp|sol|solution|explanation)$/i);
+        if (expMatch) {
+          const candidate = `q${expMatch[1]}_exp`;
+          if (reqLowerMap.has(candidate.toLowerCase())) return reqLowerMap.get(candidate.toLowerCase());
+          return candidate;
+        }
+        // Handle "Q12" -> "q12"
+        const qMatch = clean.match(/^q(\d+(?:_\d+)?)$/i);
+        if (qMatch) return `q${qMatch[1]}`;
+
+        return clean;
+      }
+
+      /* Build default marking rule key for any question */
+      EF.getMarkingRuleKey = (q) => {
+        const sec = (q.section || "General").trim();
+        const type = (q.type || "MCQ").toUpperCase();
+        const mg = (q.marks_group || q.marksGroup || "Standard").trim();
+        return `${sec}||${type}||${mg}`;
+      };
+
+      function detectMarkingGroups(questions) {
+        const map = {};
+        questions.forEach((q) => {
+          const sec = (q.section || "General").trim();
+          const type = (q.type || "MCQ").toUpperCase();
+          const mg = (q.marks_group || q.marksGroup || "Standard").trim();
+          const key = `${sec}||${type}||${mg}`;
+          if (!map[key]) {
+            const is2M = /2/i.test(mg);
+            const defaultPos = is2M ? 2 : 1;
+            const defaultNeg = type === "MCQ" ? (is2M ? 0.67 : 0.33) : 0;
+            map[key] = {
+              key, section: sec, type, marksGroup: mg,
+              pos: defaultPos, neg: defaultNeg, count: 0
+            };
+          }
+          map[key].count++;
+        });
+        return map;
+      }
+
+      /* Validate & normalize raw JSON pasted/uploaded by user */
+      function parseAndValidateTestJson(rawStr) {
+        draft.rawJson = rawStr;
+        draft.parseError = "";
+        draft.parsedTest = null;
+        draft.markingRules = {};
+
+        let cleaned = rawStr.trim();
+        if (!cleaned) return;
+        // Strip markdown ```json fences if user copied whole AI response block
+        const fence = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (fence) cleaned = fence[1].trim();
+
+        let obj;
+        try {
+          obj = JSON.parse(cleaned);
+        } catch (err) {
+          draft.parseError = `Invalid JSON syntax: ${err.message}. Tip: Ensure LaTeX backslashes are double-escaped (e.g., \\\\frac).`;
+          return;
+        }
+
+        // Allow either full test wrapper { title, questions: [...] } or direct array of questions [...]
+        const questionsRaw = Array.isArray(obj) ? obj : obj.questions;
+        if (!Array.isArray(questionsRaw) || !questionsRaw.length) {
+          draft.parseError = "JSON must contain a non-empty 'questions' array.";
+          return;
+        }
+
+        const normalizedQuestions = questionsRaw.map((q, idx) => {
+          const id = q.id ?? (idx + 1);
+          const type = String(q.type || (Array.isArray(q.options) && q.options.length ? (Array.isArray(q.answer) ? "MSQ" : "MCQ") : "NAT")).toUpperCase();
+          const section = String(q.section || "General").trim();
+          const marks_group = String(q.marks_group || q.marksGroup || "Standard").trim();
+          const options = type === "NAT" ? [] : (Array.isArray(q.options) ? q.options.map(String) : []);
+
+          let answer = q.answer;
+          if (type === "MCQ") {
+            if (typeof answer === "string" && /^[A-Da-d]$/.test(answer.trim())) {
+              answer = answer.trim().toUpperCase().charCodeAt(0) - 65;
+            } else {
+              answer = Number(answer ?? 0);
+            }
+          } else if (type === "MSQ") {
+            const arr = Array.isArray(answer) ? answer : [answer];
+            answer = arr.map((v) =>
+              typeof v === "string" && /^[A-Da-d]$/.test(v.trim())
+                ? v.trim().toUpperCase().charCodeAt(0) - 65
+                : Number(v)
+            ).filter((n) => !Number.isNaN(n)).sort((a, b) => a - b);
+          } else if (type === "NAT") {
+            if (Array.isArray(answer) && answer.length >= 2) {
+              answer = [Number(answer[0]), Number(answer[1])].sort((a, b) => a - b);
+            } else if (typeof answer === "object" && answer !== null && "min" in answer && "max" in answer) {
+              answer = [Number(answer.min), Number(answer.max)].sort((a, b) => a - b);
+            } else {
+              const num = Number(answer ?? 0);
+              answer = [num, num];
+            }
+          }
+
+          return {
+            id,
+            section,
+            type,
+            marks_group,
+            passage_id: q.passage_id || "",
+            passage: q.passage || "",
+            question: String(q.question || ""),
+            options,
+            answer,
+            explanation: String(q.explanation || "")
+          };
+        });
+
+        draft.parsedTest = {
+          title: obj.title || "Untitled Mock Test",
+          exam: obj.exam || "GATE EE",
+          subject: obj.subject || "Electrical Engineering",
+          duration_minutes: Number(obj.duration_minutes || EF.state.settings.defaultDurationMin || 180),
+          questions: normalizedQuestions
+        };
+        draft.markingRules = detectMarkingGroups(normalizedQuestions);
+      }
+
+      /* Built-in Sample GATE Test (Demonstrates MCQ, MSQ, NAT Range, LaTeX, Passage & Image Options) */
+      function buildSampleTestJson() {
+        return JSON.stringify({
+          title: "GATE EE Demo — Networks, Control & Aptitude",
+          exam: "GATE EE",
+          subject: "Electrical Engineering",
+          duration_minutes: 30,
+          questions: [
+            {
+              id: 1,
+              section: "General Aptitude",
+              type: "MCQ",
+              marks_group: "1M",
+              passage_id: "",
+              passage: "",
+              question: "If $\\log_2(x - 3) = 4$, what is the value of $x$?",
+              options: ["$11$", "$15$", "$19$", "$21$"],
+              answer: 2,
+              explanation: "$x - 3 = 2^4 = 16 \\implies x = 19$."
+            },
+            {
+              id: 2,
+              section: "Network Theory",
+              type: "MCQ",
+              marks_group: "1M",
+              passage_id: "",
+              passage: "",
+              question: "A series $RLC$ circuit has $R = 10\\,\\Omega$, $L = 1\\text{ mH}$, and $C = 10\\,\\mu\\text{F}$. Its resonant frequency $\\omega_0$ is:",
+              options: ["$10^3\\text{ rad/s}$", "$10^4\\text{ rad/s}$", "$10^5\\text{ rad/s}$", "$5 \\times 10^3\\text{ rad/s}$"],
+              answer: 1,
+              explanation: "$\\omega_0 = \\frac{1}{\\sqrt{LC}} = \\frac{1}{\\sqrt{10^{-3} \\times 10^{-5}}} = \\frac{1}{10^{-4}} = 10^4\\text{ rad/s}$."
+            },
+            {
+              id: 3,
+              section: "Network Theory",
+              type: "MSQ",
+              marks_group: "2M",
+              passage_id: "p1",
+              passage: "Common Data for Q3–Q4: A linear time-invariant (LTI) second-order system has open-loop transfer function $G(s) = \\frac{K}{s(s+4)}$ with unity negative feedback.",
+              question: "For $K = 4$, which of the following statements are CORRECT?",
+              options: [
+                "The system is critically damped ($\\zeta = 1$).",
+                "Natural frequency $\\omega_n = 2\\text{ rad/s}$.",
+                "Steady-state error for a unit step input is $0.25$.",
+                "Closed-loop poles lie at $s = -2, -2$."
+              ],
+              answer: [0, 1, 3],
+              explanation: "Characteristic equation is $s^2 + 4s + 4 = (s+2)^2 = 0$, giving $\\omega_n = 2$, $\\zeta = 1$, and Type-1 unity feedback has zero step error."
+            },
+            {
+              id: 4,
+              section: "Network Theory",
+              type: "NAT",
+              marks_group: "2M",
+              passage_id: "p1",
+              passage: "Common Data for Q3–Q4: A linear time-invariant (LTI) second-order system has open-loop transfer function $G(s) = \\frac{K}{s(s+4)}$ with unity negative feedback.",
+              question: "For $K = 4$, determine the steady-state error $e_{ss}$ for a unit ramp input $r(t) = t\\,u(t)$. (Enter value rounded to 2 decimal places)",
+              options: [],
+              answer: [0.98, 1.02],
+              explanation: "Velocity error constant $K_v = \\lim_{s\\to 0} sG(s) = \\frac{K}{4} = \\frac{4}{4} = 1$. Therefore, $e_{ss} = \\frac{1}{K_v} = 1.00$."
+            },
+            {
+              id: 5,
+              section: "Control Systems",
+              type: "NAT",
+              marks_group: "1M",
+              passage_id: "",
+              passage: "",
+              question: "A 3-phase, 4-pole, 50 Hz induction motor runs at 1440 RPM. Compute the percentage slip (%).",
+              options: [],
+              answer: [3.9, 4.1],
+              explanation: "$N_s = \\frac{120f}{P} = \\frac{120 \\times 50}{4} = 1500\\text{ RPM}$. Slip $s = \\frac{1500 - 1440}{1500} \\times 100 = 4\\%$."
+            }
+          ]
+        }, null, 2);
+      }
+
+      /* Ingest a ZIP or array of File objects into draft.stagedImages */
+      async function stageImageFiles(files) {
+        const requiredKeys = draft.parsedTest ? EF.extractRequiredImageKeys(draft.parsedTest) : [];
+        let added = 0;
+
+        for (const file of files) {
+          const lower = file.name.toLowerCase();
+          if (lower.endsWith(".zip")) {
+            if (!window.JSZip) {
+              EF.toast("JSZip library unavailable.", "error");
+              continue;
+            }
+            const zip = await JSZip.loadAsync(file);
+            const entries = Object.values(zip.files).filter((f) => !f.dir && /\.(png|jpe?g|webp|svg)$/i.test(f.name) && !f.name.startsWith("__MACOSX"));
+            for (const entry of entries) {
+              const blob = await entry.async("blob");
+              const key = normalizeImageKey(entry.name, requiredKeys);
+              const prev = draft.stagedImages.get(key);
+              if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+              draft.stagedImages.set(key, {
+                fileOrBlob: blob,
+                name: entry.name.split("/").pop(),
+                size: blob.size,
+                previewUrl: URL.createObjectURL(blob)
+              });
+              added++;
+            }
+          } else if (/\.(png|jpe?g|webp|svg)$/i.test(lower)) {
+            const key = normalizeImageKey(file.name, requiredKeys);
+            const prev = draft.stagedImages.get(key);
+            if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+            draft.stagedImages.set(key, {
+              fileOrBlob: file,
+              name: file.name,
+              size: file.size,
+              previewUrl: URL.createObjectURL(file)
+            });
+            added++;
+          }
+        }
+        return added;
+      }
+
+      /* Render the complete AI Prompt Studio & Test Importer View */
+      EF.renderImporter = function () {
+        const container = document.getElementById("view-importer");
+        const verse = EF.getDailyVerse();
+        const pt = draft.parsedTest;
+        const requiredKeys = pt ? EF.extractRequiredImageKeys(pt) : [];
+        const matchedCount = requiredKeys.filter((k) => draft.stagedImages.has(k)).length;
+        const rulesList = Object.values(draft.markingRules);
+
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h2>AI Prompt Studio & Test Importer</h2>
+              <p>Copy RICECO prompts to your AI, upload the generated JSON + cropped diagrams (.zip), configure section marking, and sync.</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-soft btn-sm" id="imp-load-sample">✨ Load Sample GATE Test</button>
+              <button class="btn btn-outline btn-sm" id="imp-reset-draft">↺ Reset Form</button>
+            </div>
+          </div>
+
+          <!-- Daily Rotating Verse (Study & Preparation Page) -->
+          <div class="subtle-verse-banner">
+            <em>“${EF.esc(verse.text)}”</em>
+            <span>Daily Study Verse · ${EF.esc(verse.ref)}</span>
+          </div>
+
+          <!-- STEP 1: TWO RICECO PROMPTS -->
+          <div class="grid-2" style="margin-bottom:18px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <span class="badge badge-blue">Prompt 1</span>
+                  Questions, Options, Answers & Explanations (JSON)
+                </div>
+                <button class="btn btn-primary btn-sm" id="btn-copy-prompt-1">📋 Copy Prompt 1</button>
+              </div>
+              <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:10px;">
+                Paste this with your PYQ PDF into Gemini / ChatGPT to extract structured MCQ, MSQ, NAT range answers, LaTeX math, shared passages, and <code>[IMG:key]</code> tags (including image options).
+              </p>
+              <div class="prompt-box">${EF.esc(PROMPT_1_JSON)}</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <span class="badge badge-purple">Prompt 2</span>
+                  Diagram Cropper (.zip) + Coordinates File
+                </div>
+                <button class="btn btn-navy btn-sm" id="btn-copy-prompt-2">📋 Copy Prompt 2</button>
+              </div>
+              <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:10px;">
+                Gives you <code>examforge_diagrams.zip</code> (cached locally in IndexedDB) + optional <code>coordinates.json</code> (saved to Drive/Firestore for instant cross-device re-cropping).
+              </p>
+              <div class="prompt-box">${EF.esc(PROMPT_2_CROP)}</div>
+            </div>
+          </div>
+
+          <!-- STEP 2: UPLOAD AI JSON & METADATA -->
+          <div class="card" style="margin-bottom:18px;">
+            <div class="card-header">
+              <div class="card-title">① Upload or Paste AI Questions JSON</div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="file" id="imp-json-file" accept=".json,.txt" class="hidden" />
+                <button class="btn btn-outline btn-sm" id="btn-pick-json">📄 Upload .json File</button>
+              </div>
+            </div>
+
+            <textarea id="imp-json-textarea" class="textarea mono" rows="7" placeholder="Paste the JSON output from Prompt 1 here (markdown \`\`\`json fences are automatically stripped)...">${EF.esc(draft.rawJson)}</textarea>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; flex-wrap:wrap;">
+              <div id="imp-json-status" style="font-size:13px;">
+                ${draft.parseError
+                  ? `<span class="badge badge-red">⚠️ ${EF.esc(draft.parseError)}</span>`
+                  : pt
+                    ? `<span class="badge badge-green">✓ Valid JSON: ${pt.questions.length} questions · ${rulesList.length} detected format group(s) · ${requiredKeys.length} image slot(s)</span>`
+                    : `<span style="color:var(--text-muted);">Paste or upload Prompt 1 JSON to auto-detect sections, formats, and required diagrams.</span>`
+                }
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-validate-json">⚡ Parse & Detect Question Formats</button>
+            </div>
+
+            ${pt ? `
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border-color);">
+                <div class="field">
+                  <label>Test Title</label>
+                  <input class="input" id="imp-meta-title" value="${EF.esc(pt.title)}" />
+                </div>
+                <div class="field">
+                  <label>Exam Track</label>
+                  <input class="input" id="imp-meta-exam" list="exam-track-list" value="${EF.esc(pt.exam)}" placeholder="GATE EE / UPSC ESE / TSPSC" />
+                  <datalist id="exam-track-list">
+                    <option value="GATE EE"></option>
+                    <option value="UPSC ESE (IES)"></option>
+                    <option value="TSPSC"></option>
+                    <option value="Subject Mock"></option>
+                  </datalist>
+                </div>
+                <div class="field">
+                  <label>Subject / Category</label>
+                  <input class="input" id="imp-meta-subject" value="${EF.esc(pt.subject)}" placeholder="e.g. Power Systems" />
+                </div>
+                <div class="field">
+                  <label>Duration (Minutes)</label>
+                  <input class="input" id="imp-meta-duration" type="number" min="5" max="360" value="${pt.duration_minutes}" />
+                </div>
+              </div>
+            ` : ""}
+          </div>
+
+          <!-- STEP 3: AUTO-DETECTED SECTION × FORMAT MARKING SCHEME -->
+          ${pt ? `
+            <div class="card" style="margin-bottom:18px;">
+              <div class="card-header" style="flex-wrap:wrap;">
+                <div class="card-title">② Marking Scheme per Section & Detected Format</div>
+                <div style="display:flex; gap:7px; flex-wrap:wrap;">
+                  <button class="btn btn-soft btn-xs" id="preset-gate">GATE Preset (1M/2M)</button>
+                  <button class="btn btn-soft btn-xs" id="preset-ese">UPSC ESE (+2 / -0.67)</button>
+                  <button class="btn btn-outline btn-xs" id="preset-noneg">Zero Negative</button>
+                </div>
+              </div>
+              <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:12px;">
+                ExamForge scanned your JSON and grouped questions by <strong>Section + Type (MCQ/MSQ/NAT) + Marks Tier</strong>. Customize positive and negative marks below:
+              </p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Section</th>
+                      <th>Format</th>
+                      <th>Marks Tier</th>
+                      <th>Questions</th>
+                      <th style="width:130px;">Correct (+)</th>
+                      <th style="width:140px;">Wrong (−)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rulesList.map((r) => `
+                      <tr>
+                        <td><strong>${EF.esc(r.section)}</strong></td>
+                        <td><span class="badge ${r.type === "MCQ" ? "badge-blue" : r.type === "MSQ" ? "badge-purple" : "badge-gold"}">${r.type}</span></td>
+                        <td><span class="badge badge-neutral">${EF.esc(r.marksGroup)}</span></td>
+                        <td>${r.count} Qs</td>
+                        <td><input class="input rule-pos" data-rkey="${EF.esc(r.key)}" type="number" step="0.25" min="0" value="${r.pos}" style="padding:6px 9px;" /></td>
+                        <td><input class="input rule-neg" data-rkey="${EF.esc(r.key)}" type="number" step="0.01" min="0" value="${r.neg}" style="padding:6px 9px;" /></td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ` : ""}
+
+          <!-- STEP 4: DIAGRAMS (INDEXEDDB) + COORDINATES + PYQ PDF (GOOGLE DRIVE) -->
+          <div class="grid-2" style="margin-bottom:18px;">
+            <!-- Left: Cropped Images + Optional Coordinates Button -->
+            <div class="card">
+              <div class="card-header" style="flex-wrap:wrap;">
+                <div class="card-title">③ Diagrams & Image Options (Local IndexedDB)</div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="file" id="imp-coords-file" accept=".json,.txt" class="hidden" />
+                  <button class="btn btn-outline btn-xs" id="btn-upload-coords" title="Optional: Upload coordinates.json for cross-device re-cropping">
+                    📐 ${draft.coordinates ? `Coords (${Object.keys(draft.coordinates).length})` : "+ Coordinates (Optional)"}
+                  </button>
+                </div>
+              </div>
+
+              <div class="dropzone" id="imp-img-dropzone">
+                <input type="file" id="imp-img-input" accept=".zip,image/png,image/jpeg,image/webp,image/svg+xml" multiple class="hidden" />
+                <div style="font-size:24px; margin-bottom:6px;">🗜️ 🖼️</div>
+                <div style="font-weight:700; font-size:13.5px;">Drop <code>examforge_diagrams.zip</code> or PNG/WebP images here</div>
+                <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+                  Auto-matches <code>q12.png</code>, image options <code>q12_optA.png</code>, <code>q12_exp.png</code>, <code>p1.png</code>. Saved ONLY in local IndexedDB (0 KB Firebase storage).
+                </div>
+              </div>
+
+              <div style="margin-top:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div style="font-size:12.5px;">
+                  <strong>Staged:</strong> ${draft.stagedImages.size} image(s)
+                  ${requiredKeys.length ? ` · <span class="badge ${matchedCount === requiredKeys.length ? "badge-green" : "badge-gold"}">${matchedCount}/${requiredKeys.length} JSON keys matched</span>` : ""}
+                </div>
+                ${draft.stagedImages.size ? `<button class="btn btn-danger-soft btn-xs" id="btn-clear-staged-imgs">Clear Images</button>` : ""}
+              </div>
+
+              ${draft.coordinates ? `
+                <div style="margin-top:10px; padding:9px 12px; border-radius:9px; background:var(--brand-green-soft); color:var(--brand-green); font-size:12px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                  <span>📐 <strong>${EF.esc(draft.coordsFilename || "coordinates.json")}</strong> loaded (${Object.keys(draft.coordinates).length} crop boxes — synced for cross-device retests).</span>
+                  <button class="btn btn-xs" id="btn-remove-coords" style="color:var(--brand-red);">✕</button>
+                </div>
+              ` : ""}
+
+              ${draft.stagedImages.size ? `
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; max-height:130px; overflow-y:auto;">
+                  ${Array.from(draft.stagedImages.entries()).slice(0, 18).map(([k, v]) => `
+                    <div style="border:1px solid var(--border-color); border-radius:8px; padding:5px; width:78px; text-align:center; background:var(--bg-subtle);">
+                      <img src="${v.previewUrl}" style="width:66px; height:44px; object-fit:contain; background:#fff; border-radius:4px;" />
+                      <div class="mono" style="font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:3px;" title="${EF.esc(k)}">${EF.esc(k)}</div>
+                    </div>
+                  `).join("")}
+                  ${draft.stagedImages.size > 18 ? `<div style="align-self:center; font-size:12px; color:var(--text-muted);">+${draft.stagedImages.size - 18} more</div>` : ""}
+                </div>
+              ` : ""}
+            </div>
+
+            <!-- Right: Master Question Paper PDF (Google Drive) -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">④ Question Paper PDF (Google Drive Vault)</div>
+                <span class="badge ${EF.DriveAPI.isConnected() ? "badge-green" : "badge-neutral"}">
+                  ${EF.DriveAPI.isConnected() ? "Drive Ready" : "Optional"}
+                </span>
+              </div>
+              <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:10px;">
+                Upload the master PYQ PDF to your Google Drive (<code>ExamForge_Vault</code>) so you can download it directly from the Test Library or auto-crop diagrams on any new device.
+              </p>
+
+              <div class="dropzone" id="imp-pdf-dropzone" style="padding:14px;">
+                <input type="file" id="imp-pdf-input" accept="application/pdf" class="hidden" />
+                <div style="font-weight:700; font-size:13px;">
+                  ${draft.pdfFile ? `📄 ${EF.esc(draft.pdfFile.name)} (${EF.fmtBytes(draft.pdfFile.size)})` : "📄 Click or drop Question Paper PDF here"}
+                </div>
+                <div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">
+                  ${EF.DriveAPI.isConnected() ? "Will upload directly to Google Drive on Save." : "Connect Google Drive to auto-upload, or paste a Drive share link below."}
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <label>Or Paste Existing Google Drive PDF Share Link (Optional Fallback)</label>
+                <input class="input" id="imp-drive-link" type="url" value="${EF.esc(draft.drivePdfUrl)}" placeholder="[https://drive.google.com/file/d/](https://drive.google.com/file/d/)..." />
+              </div>
+
+              ${draft.pdfFile && draft.coordinates ? `
+                <div style="margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--brand-blue-soft); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                  <span style="font-size:12px; color:var(--brand-navy);"><strong>Bonus:</strong> Both PDF & coordinates are loaded! Slice all diagrams locally right now?</span>
+                  <button class="btn btn-primary btn-xs" id="btn-importer-autocrop">✂️ Auto-Crop in Browser</button>
+                </div>
+              ` : ""}
+            </div>
+          </div>
+
+          <!-- SAVE BAR -->
+          <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+            <div style="font-size:13px; color:var(--text-secondary);">
+              ${pt
+                ? `Ready to save <strong>${EF.esc(pt.title)}</strong> (${pt.questions.length} Qs · ${draft.stagedImages.size} local WebP image(s) · ${draft.coordinates ? "coords attached" : "no coords"}).`
+                : "Step 1: Parse a valid Questions JSON to enable saving."
+              }
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <span id="imp-save-progress" style="font-size:12.5px; color:var(--brand-blue); font-weight:600;"></span>
+              <button class="btn btn-success" id="btn-save-imported-test" ${pt ? "" : "disabled style='opacity:0.5; cursor:not-allowed;'"}>
+                💾 Save Test & Sync to Cloud
+              </button>
+            </div>
+          </div>
+        `;
+
+        /* --- Bind Importer Events --- */
+        document.getElementById("btn-copy-prompt-1").addEventListener("click", async () => {
+          await navigator.clipboard.writeText(PROMPT_1_JSON);
+          EF.toast("Prompt 1 (JSON Extractor) copied to clipboard!", "success");
+        });
+
+        document.getElementById("btn-copy-prompt-2").addEventListener("click", async () => {
+          await navigator.clipboard.writeText(PROMPT_2_CROP);
+          EF.toast("Prompt 2 (Diagram Cropper + Coordinates) copied!", "success");
+        });
+
+        document.getElementById("imp-load-sample").addEventListener("click", () => {
+          parseAndValidateTestJson(buildSampleTestJson());
+          EF.renderImporter();
+          EF.toast("Sample GATE EE test loaded! Review marking rules or click Save.", "success");
+        });
+
+        document.getElementById("imp-reset-draft").addEventListener("click", () => {
+          draft.stagedImages.forEach((v) => v.previewUrl && URL.revokeObjectURL(v.previewUrl));
+          draft.rawJson = "";
+          draft.parsedTest = null;
+          draft.parseError = "";
+          draft.markingRules = {};
+          draft.stagedImages = new Map();
+          draft.coordinates = null;
+          draft.coordsFilename = "";
+          draft.pdfFile = null;
+          draft.drivePdfUrl = "";
+          draft.drivePdfId = "";
+          draft.driveCoordsId = "";
+          EF.renderImporter();
+        });
+
+        // JSON file picker & parser
+        const jsonFileIn = document.getElementById("imp-json-file");
+        document.getElementById("btn-pick-json").addEventListener("click", () => jsonFileIn.click());
+        jsonFileIn.addEventListener("change", async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          const txt = await f.text();
+          parseAndValidateTestJson(txt);
+          EF.renderImporter();
+        });
+
+        document.getElementById("btn-validate-json").addEventListener("click", () => {
+          const val = document.getElementById("imp-json-textarea").value;
+          parseAndValidateTestJson(val);
+          EF.renderImporter();
+        });
+
+        // Sync metadata inputs back to draft
+        if (pt) {
+          document.getElementById("imp-meta-title").addEventListener("input", (e) => { pt.title = e.target.value; });
+          document.getElementById("imp-meta-exam").addEventListener("input", (e) => { pt.exam = e.target.value; });
+          document.getElementById("imp-meta-subject").addEventListener("input", (e) => { pt.subject = e.target.value; });
+          document.getElementById("imp-meta-duration").addEventListener("input", (e) => { pt.duration_minutes = Math.max(5, Number(e.target.value) || 60); });
+
+          // Marking scheme edits
+          container.querySelectorAll(".rule-pos").forEach((inp) => {
+            inp.addEventListener("input", () => {
+              const r = draft.markingRules[inp.dataset.rkey];
+              if (r) r.pos = Number(inp.value) || 0;
+            });
+          });
+          container.querySelectorAll(".rule-neg").forEach((inp) => {
+            inp.addEventListener("input", () => {
+              const r = draft.markingRules[inp.dataset.rkey];
+              if (r) r.neg = Number(inp.value) || 0;
+            });
+          });
+
+          // Marking Presets
+          document.getElementById("preset-gate").addEventListener("click", () => {
+            Object.values(draft.markingRules).forEach((r) => {
+              const is2M = /2/i.test(r.marksGroup);
+              r.pos = is2M ? 2 : 1;
+              r.neg = r.type === "MCQ" ? (is2M ? 0.67 : 0.33) : 0;
+            });
+            EF.renderImporter();
+          });
+          document.getElementById("preset-ese").addEventListener("click", () => {
+            Object.values(draft.markingRules).forEach((r) => {
+              r.pos = 2;
+              r.neg = r.type === "MCQ" ? 0.67 : 0;
+            });
+            EF.renderImporter();
+          });
+          document.getElementById("preset-noneg").addEventListener("click", () => {
+            Object.values(draft.markingRules).forEach((r) => { r.neg = 0; });
+            EF.renderImporter();
+          });
+        }
+
+        // Image / ZIP Dropzone
+        const imgDrop = document.getElementById("imp-img-dropzone");
+        const imgInput = document.getElementById("imp-img-input");
+        imgDrop.addEventListener("click", () => imgInput.click());
+        imgDrop.addEventListener("dragover", (e) => { e.preventDefault(); imgDrop.classList.add("dragover"); });
+        imgDrop.addEventListener("dragleave", () => imgDrop.classList.remove("dragover"));
+        imgDrop.addEventListener("drop", async (e) => {
+          e.preventDefault();
+          imgDrop.classList.remove("dragover");
+          const count = await stageImageFiles(Array.from(e.dataTransfer.files));
+          if (count) EF.toast(`Staged ${count} diagram/option image(s).`, "success");
+          EF.renderImporter();
+        });
+        imgInput.addEventListener("change", async (e) => {
+          const count = await stageImageFiles(Array.from(e.target.files));
+          if (count) EF.toast(`Staged ${count} diagram/option image(s).`, "success");
+          EF.renderImporter();
+        });
+
+        document.getElementById("btn-clear-staged-imgs")?.addEventListener("click", () => {
+          draft.stagedImages.forEach((v) => v.previewUrl && URL.revokeObjectURL(v.previewUrl));
+          draft.stagedImages = new Map();
+          EF.renderImporter();
+        });
+
+        // Optional Coordinates Upload Button
+        const coordsIn = document.getElementById("imp-coords-file");
+        document.getElementById("btn-upload-coords").addEventListener("click", () => coordsIn.click());
+        coordsIn.addEventListener("change", async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          try {
+            const raw = (await f.text()).trim();
+            const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+            const parsed = JSON.parse(fence ? fence[1] : raw);
+            if (typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Expected key->bbox JSON object.");
+            draft.coordinates = parsed;
+            draft.coordsFilename = f.name;
+            EF.toast(`Loaded ${Object.keys(parsed).length} coordinate boxes.`, "success");
+            EF.renderImporter();
+          } catch (err) {
+            EF.toast(`Invalid coordinates file: ${err.message}`, "error");
+          }
+        });
+        document.getElementById("btn-remove-coords")?.addEventListener("click", () => {
+          draft.coordinates = null;
+          draft.coordsFilename = "";
+          EF.renderImporter();
+        });
+
+        // PYQ PDF Upload / Link
+        const pdfDrop = document.getElementById("imp-pdf-dropzone");
+        const pdfInput = document.getElementById("imp-pdf-input");
+        pdfDrop.addEventListener("click", () => pdfInput.click());
+        pdfDrop.addEventListener("dragover", (e) => { e.preventDefault(); pdfDrop.classList.add("dragover"); });
+        pdfDrop.addEventListener("dragleave", () => pdfDrop.classList.remove("dragover"));
+        pdfDrop.addEventListener("drop", (e) => {
+          e.preventDefault();
+          pdfDrop.classList.remove("dragover");
+          const f = e.dataTransfer.files[0];
+          if (f && f.name.toLowerCase().endsWith(".pdf")) {
+            draft.pdfFile = f;
+            EF.renderImporter();
+          }
+        });
+        pdfInput.addEventListener("change", (e) => {
+          const f = e.target.files[0];
+          if (f) { draft.pdfFile = f; EF.renderImporter(); }
+        });
+        document.getElementById("imp-drive-link").addEventListener("input", (e) => {
+          draft.drivePdfUrl = e.target.value.trim();
+        });
+
+        // Bonus: Client-Side Auto-Crop inside Importer (if PDF + Coordinates present)
+        document.getElementById("btn-importer-autocrop")?.addEventListener("click", async () => {
+          const tempId = "__staging_crop__";
+          try {
+            EF.toast("Auto-cropping diagrams from PDF in browser...", "info");
+            const buf = await draft.pdfFile.arrayBuffer();
+            const res = await EF.autoCropPdfWithCoordinates(buf, draft.coordinates, tempId);
+            const items = await EF.ImageDB.getTestImages(tempId);
+            items.forEach((it) => {
+              const prev = draft.stagedImages.get(it.key);
+              if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+              draft.stagedImages.set(it.key, {
+                fileOrBlob: it.blob,
+                name: `${it.key}.webp`,
+                size: it.size,
+                previewUrl: URL.createObjectURL(it.blob)
+              });
+            });
+            await EF.ImageDB.deleteTestImages(tempId);
+            EF.toast(`Auto-cropped ${res.cropped}/${res.total} figures locally!`, "success");
+            EF.renderImporter();
+          } catch (err) {
+            EF.toast(`Auto-crop failed: ${err.message}`, "error");
+          }
+        });
+
+        // Final Save & Sync Handler
+        document.getElementById("btn-save-imported-test")?.addEventListener("click", async () => {
+          if (!draft.parsedTest) return;
+          const btn = document.getElementById("btn-save-imported-test");
+          const prog = document.getElementById("imp-save-progress");
+          btn.disabled = true;
+
+          const testId = EF.uid("test");
+          const cleanTitle = (draft.parsedTest.title || "Mock Test").trim();
+          const safeSlug = cleanTitle.replace(/[^a-z0-9]+/gi, "_").slice(0, 48);
+
+          try {
+            // 1. Cache all staged images into local IndexedDB (WebP compressed)
+            if (draft.stagedImages.size) {
+              prog.textContent = `Caching ${draft.stagedImages.size} WebP diagrams locally...`;
+              let done = 0;
+              for (const [key, item] of draft.stagedImages.entries()) {
+                await EF.ImageDB.putImage(testId, key, item.fileOrBlob);
+                done++;
+                prog.textContent = `Caching diagrams (${done}/${draft.stagedImages.size})...`;
+              }
+            }
+
+            // 2. Upload PYQ PDF & coordinates backup to Google Drive (if connected)
+            let pdfDriveId = "";
+            let pdfDriveLink = draft.drivePdfUrl || "";
+            let coordsDriveId = "";
+
+            if (draft.pdfFile) {
+              if (EF.DriveAPI.isConnected()) {
+                prog.textContent = "Uploading PYQ PDF to Google Drive...";
+                const uploaded = await EF.DriveAPI.uploadFile(draft.pdfFile, `${safeSlug}.pdf`, "application/pdf");
+                pdfDriveId = uploaded.id;
+                pdfDriveLink = uploaded.webViewLink || `[https://drive.google.com/file/d/$](https://drive.google.com/file/d/$){uploaded.id}/view`;
+              } else {
+                EF.toast("Google Drive not connected — PDF skipped (you can connect Drive & attach later).", "warn");
+              }
+            }
+
+            if (draft.coordinates && EF.DriveAPI.isConnected()) {
+              try {
+                prog.textContent = "Backing up coordinates.json to Google Drive...";
+                const cBlob = new Blob([JSON.stringify(draft.coordinates, null, 2)], { type: "application/json" });
+                const upC = await EF.DriveAPI.uploadFile(cBlob, `${safeSlug}_coordinates.json`, "application/json");
+                coordsDriveId = upC.id;
+              } catch (_) {}
+            }
+
+            // 3. Build Test Document (Zero Image Blobs — Lightweight Firestore Doc)
+            const sections = Array.from(new Set(draft.parsedTest.questions.map((q) => q.section)));
+            const totalMarks = draft.parsedTest.questions.reduce((sum, q) => {
+              const r = draft.markingRules[EF.getMarkingRuleKey(q)];
+              return sum + (r ? Number(r.pos) : 1);
+            }, 0);
+
+            const testDoc = {
+              id: testId,
+              title: cleanTitle,
+              exam: (draft.parsedTest.exam || "General").trim(),
+              subject: (draft.parsedTest.subject || "Engineering").trim(),
+              durationMinutes: Number(draft.parsedTest.duration_minutes) || 60,
+              sections,
+              totalMarks: Number(totalMarks.toFixed(2)),
+              markingRules: JSON.parse(JSON.stringify(draft.markingRules)),
+              questions: draft.parsedTest.questions,
+              coordinates: draft.coordinates || null,
+              pdfDriveId,
+              pdfDriveLink,
+              coordsDriveId,
+              createdAt: Date.now()
+            };
+
+            prog.textContent = "Syncing test metadata to Firestore...";
+            await EF.saveTest(testDoc);
+            await EF.logActivity("📥", `Imported: ${testDoc.title} (${testDoc.questions.length} Qs)`, "purple");
+
+            // Reset staging cleanly
+            draft.stagedImages.forEach((v) => v.previewUrl && URL.revokeObjectURL(v.previewUrl));
+            draft.rawJson = "";
+            draft.parsedTest = null;
+            draft.markingRules = {};
+            draft.stagedImages = new Map();
+            draft.coordinates = null;
+            draft.coordsFilename = "";
+            draft.pdfFile = null;
+            draft.drivePdfUrl = "";
+
+            EF.toast(`Saved "${testDoc.title}" successfully!`, "success");
+            EF.navigate("library");
+          } catch (err) {
+            console.error(err);
+            EF.toast(`Save failed: ${err.message}`, "error");
+            prog.textContent = "";
+            btn.disabled = false;
+          }
+        });
+      };
+    })();
+
+
     // ==================== [PASTE PART 3 HERE] ====================
 
     // ==================== [PASTE PART 4 HERE] ====================
