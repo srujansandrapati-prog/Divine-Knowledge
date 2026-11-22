@@ -3087,6 +3087,1600 @@ ${coordsStr}
 
     // ==================== [PASTE PART 3 HERE] ====================
 
+
+        /* =====================================================================
+       PART 3: TEST LIBRARY, CROSS-DEVICE RECOVERY, DIAGRAM MANAGER & EXAM ENGINE
+       ===================================================================== */
+    (() => {
+      const CRASH_STORAGE_KEY = "ef_active_exam_session_v1";
+
+      /* -----------------------------------------------------------------
+         SHARED HELPERS: IMAGE EXTRACTION, GRADING & SHUFFLING
+         ----------------------------------------------------------------- */
+      async function ingestImagesToTestDB(testId, files, requiredKeys = []) {
+        const reqLower = new Map(requiredKeys.map((k) => [k.toLowerCase(), k]));
+        const normalize = (rawName) => {
+          const base = rawName.split(/[\\/]/).pop().replace(/\.[^.]+$/, "").trim();
+          if (reqLower.has(base.toLowerCase())) return reqLower.get(base.toLowerCase());
+          const clean = base.replace(/\s+/g, "_");
+          if (/^\d+$/.test(clean) && reqLower.has(`q${clean}`)) return reqLower.get(`q${clean}`);
+          const optM = clean.match(/^q?(\d+)[_-]?(?:opt)?[_-]?([a-dA-D])$/);
+          if (optM) {
+            const cand = `q${optM[1]}_opt${optM[2].toUpperCase()}`;
+            return reqLower.get(cand.toLowerCase()) || cand;
+          }
+          const expM = clean.match(/^q?(\d+)[_-]?(?:exp|sol|solution|explanation)$/i);
+          if (expM) {
+            const cand = `q${expM[1]}_exp`;
+            return reqLower.get(cand.toLowerCase()) || cand;
+          }
+          const qM = clean.match(/^q(\d+(?:_\d+)?)$/i);
+          if (qM) return `q${qM[1]}`;
+          return clean;
+        };
+
+        let count = 0;
+        for (const file of files) {
+          const lower = file.name.toLowerCase();
+          if (lower.endsWith(".zip")) {
+            if (!window.JSZip) continue;
+            const zip = await JSZip.loadAsync(file);
+            const entries = Object.values(zip.files).filter(
+              (f) => !f.dir && /\.(png|jpe?g|webp|svg)$/i.test(f.name) && !f.name.startsWith("__MACOSX")
+            );
+            for (const entry of entries) {
+              const blob = await entry.async("blob");
+              await EF.ImageDB.putImage(testId, normalize(entry.name), blob);
+              count++;
+            }
+          } else if (/\.(png|jpe?g|webp|svg)$/i.test(lower)) {
+            await EF.ImageDB.putImage(testId, normalize(file.name), file);
+            count++;
+          }
+        }
+        return count;
+      }
+
+      function shuffleArray(arr) {
+        const copy = arr.slice();
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+      }
+
+      function cloneAndShuffleQuestion(q) {
+        const cloned = JSON.parse(JSON.stringify(q));
+        if ((cloned.type === "MCQ" || cloned.type === "MSQ") && Array.isArray(cloned.options) && cloned.options.length > 1) {
+          const indexed = cloned.options.map((text, oldIdx) => ({ text, oldIdx }));
+          const shuffled = shuffleArray(indexed);
+          cloned.options = shuffled.map((x) => x.text);
+          if (cloned.type === "MCQ") {
+            cloned.answer = shuffled.findIndex((x) => x.oldIdx === Number(q.answer));
+          } else if (cloned.type === "MSQ") {
+            const oldAns = new Set((Array.isArray(q.answer) ? q.answer : [q.answer]).map(Number));
+            cloned.answer = shuffled
+              .map((x, newIdx) => (oldAns.has(x.oldIdx) ? newIdx : -1))
+              .filter((v) => v >= 0)
+              .sort((a, b) => a - b);
+          }
+        }
+        return cloned;
+      }
+
+      function isResponseEmpty(type, resp) {
+        if (resp === undefined || resp === null) return true;
+        if (type === "MCQ") return resp === "" || Number.isNaN(Number(resp));
+        if (type === "MSQ") return !Array.isArray(resp) || resp.length === 0;
+        if (type === "NAT") return String(resp).trim() === "";
+        return true;
+      }
+
+      function evaluateQuestion(q, resp, markingRules) {
+        const rKey = EF.getMarkingRuleKey(q);
+        const rule = (markingRules && markingRules[rKey]) || { pos: 1, neg: q.type === "MCQ" ? 0.33 : 0 };
+        const pos = Number(rule.pos ?? 1);
+        const neg = Number(rule.neg ?? 0);
+
+        if (isResponseEmpty(q.type, resp)) {
+          return { status: "unattempted", marks: 0, maxMarks: pos };
+        }
+
+        let isCorrect = false;
+        if (q.type === "MCQ") {
+          isCorrect = Number(resp) === Number(q.answer);
+        } else if (q.type === "MSQ") {
+          const u = (Array.isArray(resp) ? resp : []).map(Number).sort((a, b) => a - b);
+          const a = (Array.isArray(q.answer) ? q.answer : [q.answer]).map(Number).sort((a, b) => a - b);
+          isCorrect = u.length === a.length && u.every((v, i) => v === a[i]);
+        } else if (q.type === "NAT") {
+          const val = parseFloat(String(resp).trim());
+          if (!Number.isNaN(val)) {
+            if (Array.isArray(q.answer) && q.answer.length >= 2) {
+              const min = Math.min(Number(q.answer[0]), Number(q.answer[1]));
+              const max = Math.max(Number(q.answer[0]), Number(q.answer[1]));
+              isCorrect = val >= min - 1e-9 && val <= max + 1e-9;
+            } else {
+              isCorrect = Math.abs(val - Number(q.answer)) <= 1e-6;
+            }
+          }
+        }
+
+        return {
+          status: isCorrect ? "correct" : "wrong",
+          marks: isCorrect ? pos : -neg,
+          maxMarks: pos
+        };
+      }
+
+      function formatExpectedAnswer(q) {
+        if (q.type === "MCQ") return String.fromCharCode(65 + Number(q.answer));
+        if (q.type === "MSQ") return (Array.isArray(q.answer) ? q.answer : [q.answer]).map((i) => String.fromCharCode(65 + Number(i))).join(", ");
+        if (q.type === "NAT") {
+          if (Array.isArray(q.answer) && q.answer.length >= 2) {
+            return q.answer[0] === q.answer[1] ? `${q.answer[0]}` : `${q.answer[0]} to ${q.answer[1]}`;
+          }
+          return String(q.answer);
+        }
+        return "—";
+      }
+
+      function formatUserAnswer(q, resp) {
+        if (isResponseEmpty(q.type, resp)) return "Not Attempted";
+        if (q.type === "MCQ") return String.fromCharCode(65 + Number(resp));
+        if (q.type === "MSQ") return resp.map((i) => String.fromCharCode(65 + Number(i))).join(", ");
+        return String(resp);
+      }
+
+      async function downloadDrivePdf(test) {
+        if (test.pdfDriveId && EF.DriveAPI.isConnected()) {
+          try {
+            EF.toast("Fetching PYQ PDF from Google Drive...", "info");
+            const blob = await EF.DriveAPI.downloadBlob(test.pdfDriveId);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${(test.title || "PYQ").replace(/[^a-z0-9]+/gi, "_")}.pdf`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+            return;
+          } catch (e) {
+            EF.toast(e.message, "warn");
+          }
+        }
+        if (test.pdfDriveLink) {
+          window.open(test.pdfDriveLink, "_blank", "noopener");
+        } else {
+          EF.toast("No PYQ PDF linked to this test yet.", "warn");
+        }
+      }
+
+      function downloadCoordinatesFile(test) {
+        if (!test.coordinates) {
+          EF.toast("No coordinates file stored for this test.", "warn");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(test.coordinates, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${(test.title || "test").replace(/[^a-z0-9]+/gi, "_")}_coordinates.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      }
+
+      /* -----------------------------------------------------------------
+         1. TEST LIBRARY VIEW (WITH DIRECT DRIVE PDF DOWNLOAD ICON)
+         ----------------------------------------------------------------- */
+      const libFilters = { exam: "ALL", subject: "ALL" };
+
+      EF.renderLibrary = async function () {
+        const container = document.getElementById("view-library");
+        const tests = EF.state.tests || [];
+        const exams = Array.from(new Set(tests.map((t) => t.exam || "General"))).sort();
+        const subjects = Array.from(new Set(tests.map((t) => t.subject || "Engineering"))).sort();
+        const q = (EF.state.searchQuery || "").toLowerCase();
+
+        const filtered = tests.filter((t) => {
+          if (libFilters.exam !== "ALL" && (t.exam || "General") !== libFilters.exam) return false;
+          if (libFilters.subject !== "ALL" && (t.subject || "Engineering") !== libFilters.subject) return false;
+          if (q) {
+            const hay = `${t.title} ${t.exam} ${t.subject} ${(t.sections || []).join(" ")}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+
+        // Pre-compute cache health for displayed tests
+        const cacheMap = {};
+        for (const t of filtered) {
+          const req = EF.extractRequiredImageKeys(t);
+          const missing = req.length ? await EF.getMissingImageKeys(t) : [];
+          cacheMap[t.id] = { reqCount: req.length, missingCount: missing.length };
+        }
+
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h2>Test Library</h2>
+              <p>Organize mocks by exam track & subject, download attached PYQ PDFs, or launch any retest mode.</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" id="lib-goto-import">＋ Import New Test</button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <select class="select" id="lib-filter-exam" style="width:auto; min-width:165px;">
+                <option value="ALL">All Exam Tracks (${tests.length})</option>
+                ${exams.map((e) => `<option value="${EF.esc(e)}" ${libFilters.exam === e ? "selected" : ""}>${EF.esc(e)}</option>`).join("")}
+              </select>
+              <select class="select" id="lib-filter-subject" style="width:auto; min-width:175px;">
+                <option value="ALL">All Subjects</option>
+                ${subjects.map((s) => `<option value="${EF.esc(s)}" ${libFilters.subject === s ? "selected" : ""}>${EF.esc(s)}</option>`).join("")}
+              </select>
+              ${q ? `<span class="badge badge-blue">Search: "${EF.esc(q)}"</span>` : ""}
+            </div>
+            <div style="font-size:12.5px; color:var(--text-secondary);">
+              Showing <strong>${filtered.length}</strong> of ${tests.length} test(s)
+            </div>
+          </div>
+
+          ${filtered.length === 0 ? `
+            <div class="card" style="text-align:center; padding:48px 24px;">
+              <div style="font-size:38px; margin-bottom:10px;">📚</div>
+              <h3 style="font-size:18px; margin-bottom:6px;">No Mock Tests Found</h3>
+              <p style="font-size:13.5px; color:var(--text-secondary); max-width:440px; margin:0 auto 18px;">
+                Head to <strong>AI Prompt & Import</strong> to extract a PYQ paper with our RICECO prompts or load the built-in Sample GATE EE test.
+              </p>
+              <button class="btn btn-primary" id="lib-empty-import">Open AI Prompt Studio →</button>
+            </div>
+          ` : `
+            <div class="tests-grid">
+              ${filtered.map((t) => {
+                const tAttempts = EF.state.attempts.filter((a) => a.testId === t.id);
+                const bestPct = tAttempts.length ? Math.max(...tAttempts.map((a) => a.percentage || 0)) : null;
+                const cache = cacheMap[t.id];
+                const hasPdf = Boolean(t.pdfDriveLink || t.pdfDriveId);
+
+                return `
+                  <div class="test-card">
+                    <div>
+                      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                          <span class="badge badge-blue">${EF.esc(t.exam || "Exam")}</span>
+                          <span class="badge badge-neutral">${EF.esc(t.subject || "General")}</span>
+                        </div>
+                        <div style="display:flex; gap:5px; align-items:center;">
+                          ${hasPdf ? `
+                            <button class="btn btn-soft btn-xs btn-dl-pdf" data-tid="${t.id}" title="Download Question Paper PDF from Google Drive">
+                              📄 PDF
+                            </button>
+                          ` : `
+                            <button class="btn btn-outline btn-xs btn-attach-pdf" data-tid="${t.id}" title="Attach Google Drive PDF link or upload PDF" style="opacity:0.75;">
+                              ＋ PDF
+                            </button>
+                          `}
+                          <button class="btn btn-xs btn-del-test" data-tid="${t.id}" title="Delete Test" style="color:var(--brand-red);">🗑️</button>
+                        </div>
+                      </div>
+
+                      <h3 style="font-size:16px; font-weight:800; margin:11px 0 6px; line-height:1.35;">${EF.esc(t.title)}</h3>
+
+                      <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:12.5px; color:var(--text-secondary); margin-bottom:10px;">
+                        <span>📝 ${t.questions?.length || 0} Qs</span>
+                        <span>⏱️ ${t.durationMinutes || 60} min</span>
+                        <span>🎯 ${t.totalMarks || t.questions?.length || 0} Marks</span>
+                      </div>
+
+                      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        ${(t.sections || []).slice(0, 3).map((s) => `<span class="badge badge-neutral" style="font-size:11px;">${EF.esc(s)}</span>`).join("")}
+                        ${(t.sections || []).length > 3 ? `<span class="badge badge-neutral" style="font-size:11px;">+${t.sections.length - 3}</span>` : ""}
+                      </div>
+                    </div>
+
+                    <div style="padding-top:12px; border-top:1px solid var(--border-color); display:flex; flex-direction:column; gap:10px;">
+                      <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--text-secondary);">
+                        <span>${tAttempts.length ? `Attempts: <strong>${tAttempts.length}</strong> · Best: <strong style="color:var(--brand-green);">${bestPct.toFixed(1)}%</strong>` : "Not attempted yet"}</span>
+                        ${cache.reqCount > 0
+                          ? (cache.missingCount === 0
+                            ? `<span class="badge badge-green" style="font-size:10.5px;">🖼️ ${cache.reqCount} Cached</span>`
+                            : `<span class="badge badge-gold" style="font-size:10.5px;" title="Missing on this device — will prompt recovery on launch">⚠️ ${cache.missingCount} Missing</span>`)
+                          : `<span style="font-size:11px; color:var(--text-muted);">Text/Math only</span>`
+                        }
+                      </div>
+
+                      <div style="display:flex; gap:8px;">
+                        <button class="btn btn-primary btn-sm btn-launch-test" data-tid="${t.id}" style="flex:1;">
+                          ▶ ${tAttempts.length ? "Retake / Practice" : "Start Mock Test"}
+                        </button>
+                        <button class="btn btn-outline btn-sm btn-manage-imgs" data-tid="${t.id}" title="Manage Diagrams">🖼️</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          `}
+        `;
+
+        // Library Event Bindings
+        document.getElementById("lib-goto-import")?.addEventListener("click", () => EF.navigate("importer"));
+        document.getElementById("lib-empty-import")?.addEventListener("click", () => EF.navigate("importer"));
+        document.getElementById("lib-filter-exam")?.addEventListener("change", (e) => { libFilters.exam = e.target.value; EF.renderLibrary(); });
+        document.getElementById("lib-filter-subject")?.addEventListener("change", (e) => { libFilters.subject = e.target.value; EF.renderLibrary(); });
+
+        container.querySelectorAll(".btn-launch-test").forEach((b) =>
+          b.addEventListener("click", () => EF.openTestLaunchFlow(b.dataset.tid))
+        );
+        container.querySelectorAll(".btn-dl-pdf").forEach((b) =>
+          b.addEventListener("click", () => {
+            const t = EF.state.tests.find((x) => x.id === b.dataset.tid);
+            if (t) downloadDrivePdf(t);
+          })
+        );
+        container.querySelectorAll(".btn-attach-pdf").forEach((b) =>
+          b.addEventListener("click", () => openAttachPdfModal(b.dataset.tid))
+        );
+        container.querySelectorAll(".btn-manage-imgs").forEach((b) =>
+          b.addEventListener("click", () => {
+            diagramSelectedTestId = b.dataset.tid;
+            EF.navigate("diagrams");
+          })
+        );
+        container.querySelectorAll(".btn-del-test").forEach((b) =>
+          b.addEventListener("click", async () => {
+            const t = EF.state.tests.find((x) => x.id === b.dataset.tid);
+            if (!t) return;
+            if (!confirm(`Delete "${t.title}" and clear its cached diagrams? Past attempt stats remain in Analytics.`)) return;
+            await EF.deleteTest(t.id);
+            EF.toast("Test deleted.", "info");
+            EF.renderLibrary();
+          })
+        );
+      };
+
+      function openAttachPdfModal(testId) {
+        const test = EF.state.tests.find((t) => t.id === testId);
+        if (!test) return;
+        EF.openModal(`
+          <div class="modal-head">
+            <h3>Attach PYQ PDF — ${EF.esc(test.title)}</h3>
+            <button class="btn btn-xs" onclick="EF.closeModal()">✕</button>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div class="field">
+              <label>Upload PDF to Google Drive (${EF.DriveAPI.isConnected() ? "Drive Connected" : "Connect Drive first"})</label>
+              <input type="file" id="attach-pdf-file" accept="application/pdf" class="input" />
+            </div>
+            <div class="field">
+              <label>Or Paste Google Drive Share Link</label>
+              <input type="url" id="attach-pdf-link" class="input" value="${EF.esc(test.pdfDriveLink || "")}" placeholder="https://drive.google.com/file/d/..." />
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+              <button class="btn btn-outline btn-sm" onclick="EF.closeModal()">Cancel</button>
+              <button class="btn btn-primary btn-sm" id="btn-confirm-attach-pdf">Save PDF Link</button>
+            </div>
+          </div>
+        `);
+
+        document.getElementById("btn-confirm-attach-pdf").addEventListener("click", async () => {
+          const f = document.getElementById("attach-pdf-file").files[0];
+          const link = document.getElementById("attach-pdf-link").value.trim();
+          const btn = document.getElementById("btn-confirm-attach-pdf");
+          btn.disabled = true;
+          try {
+            if (f) {
+              if (!EF.DriveAPI.isConnected()) await EF.DriveAPI.connectInteractive();
+              btn.textContent = "Uploading to Drive...";
+              const up = await EF.DriveAPI.uploadFile(f, `${test.title.replace(/[^a-z0-9]+/gi, "_")}.pdf`, "application/pdf");
+              test.pdfDriveId = up.id;
+              test.pdfDriveLink = up.webViewLink || `https://drive.google.com/file/d/${up.id}/view`;
+            } else if (link) {
+              test.pdfDriveLink = link;
+            }
+            await EF.saveTest(test);
+            EF.closeModal();
+            EF.toast("PYQ PDF attached!", "success");
+            EF.renderLibrary();
+          } catch (e) {
+            EF.toast(e.message, "error");
+            btn.disabled = false;
+            btn.textContent = "Save PDF Link";
+          }
+        });
+      }
+
+      /* -----------------------------------------------------------------
+         2. CROSS-DEVICE MISSING-IMAGE RECOVERY + PRE-TEST MODAL (JOSHUA 1:9)
+         ----------------------------------------------------------------- */
+      EF.openTestLaunchFlow = async function (testId, presetMode = "full") {
+        const test = EF.state.tests.find((t) => t.id === testId);
+        if (!test) return EF.toast("Test not found.", "error");
+
+        const missing = await EF.getMissingImageKeys(test);
+        if (missing.length > 0) {
+          openMissingImagesModal(test, missing, presetMode);
+        } else {
+          openPreTestModal(test, presetMode);
+        }
+      };
+
+      function openMissingImagesModal(test, missingKeys, presetMode) {
+        const hasCoords = Boolean(test.coordinates && Object.keys(test.coordinates).length);
+        const hasPdf = Boolean(test.pdfDriveId || test.pdfDriveLink);
+
+        EF.openModal(`
+          <div class="modal-head">
+            <h3>🖼️ Local Diagrams Missing on This Device</h3>
+            <button class="btn btn-xs" onclick="EF.closeModal()">✕</button>
+          </div>
+          <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.55; margin-bottom:14px;">
+            To keep Firebase usage at 0 KB, diagrams are cached in each device's local IndexedDB.
+            <strong>${missingKeys.length}</strong> figure(s) for <strong>${EF.esc(test.title)}</strong> aren't cached here yet.
+          </p>
+
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; max-height:62px; overflow-y:auto;">
+            ${missingKeys.slice(0, 16).map((k) => `<span class="badge badge-gold mono">${EF.esc(k)}</span>`).join("")}
+            ${missingKeys.length > 16 ? `<span class="badge badge-neutral">+${missingKeys.length - 16} more</span>` : ""}
+          </div>
+
+          ${hasCoords ? `
+            <div style="padding:14px; border-radius:12px; background:var(--brand-blue-soft); border:1px solid rgba(37,99,235,0.22); margin-bottom:14px;">
+              <div style="font-weight:700; font-size:13.5px; color:var(--brand-navy); margin-bottom:6px;">
+                ⚡ Fastest Option: 1-Click Auto-Crop Directly in Browser
+              </div>
+              <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">
+                Uses your saved <code>coordinates.json</code> (${Object.keys(test.coordinates).length} boxes) + PDF.js to slice and cache every figure locally in seconds—no AI chat needed.
+              </p>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                ${test.pdfDriveId ? `<button class="btn btn-primary btn-sm" id="rec-autocrop-drive">☁️ Fetch from Drive & Auto-Crop</button>` : ""}
+                <input type="file" id="rec-local-pdf-in" accept="application/pdf" class="hidden" />
+                <button class="btn btn-outline btn-sm" id="rec-autocrop-local">📄 Pick Local PDF & Auto-Crop</button>
+                <span id="rec-crop-progress" style="font-size:12px; font-weight:600; color:var(--brand-blue);"></span>
+              </div>
+            </div>
+          ` : ""}
+
+          <div style="padding:14px; border-radius:12px; background:var(--bg-subtle); border:1px solid var(--border-color); margin-bottom:14px;">
+            <div style="font-weight:700; font-size:13px; margin-bottom:8px;">🤖 Or Re-Crop with AI & Upload ZIP</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+              ${hasPdf ? `<button class="btn btn-outline btn-xs" id="rec-dl-pdf">1. Download PYQ PDF</button>` : `<span class="badge badge-neutral">No PDF linked</span>`}
+              ${hasCoords ? `<button class="btn btn-outline btn-xs" id="rec-dl-coords">2. Download coordinates.json</button>` : ""}
+              ${hasCoords ? `<button class="btn btn-soft btn-xs" id="rec-copy-prompt">3. Copy AI Re-Crop Prompt</button>` : ""}
+            </div>
+            <div class="dropzone" id="rec-zip-drop" style="padding:12px;">
+              <input type="file" id="rec-zip-input" accept=".zip,image/*" multiple class="hidden" />
+              <div style="font-size:12.5px; font-weight:600;">Drop re-cropped <code>examforge_diagrams.zip</code> or PNG/WebP files here</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" id="rec-skip-continue">Continue Without Images →</button>
+            <button class="btn btn-xs" onclick="EF.closeModal()">Cancel</button>
+          </div>
+        `, true);
+
+        const finishRecovery = async () => {
+          EF.closeModal();
+          openPreTestModal(test, presetMode);
+        };
+
+        document.getElementById("rec-dl-pdf")?.addEventListener("click", () => downloadDrivePdf(test));
+        document.getElementById("rec-dl-coords")?.addEventListener("click", () => downloadCoordinatesFile(test));
+        document.getElementById("rec-copy-prompt")?.addEventListener("click", async () => {
+          await navigator.clipboard.writeText(EF.getRecropPrompt(test));
+          EF.toast("AI Re-Crop prompt (with coordinates) copied!", "success");
+        });
+
+        // Auto-crop from Google Drive PDF
+        document.getElementById("rec-autocrop-drive")?.addEventListener("click", async () => {
+          const prog = document.getElementById("rec-crop-progress");
+          try {
+            if (!EF.DriveAPI.isConnected()) await EF.DriveAPI.connectInteractive();
+            prog.textContent = "Downloading PDF from Drive...";
+            const blob = await EF.DriveAPI.downloadBlob(test.pdfDriveId);
+            const buf = await blob.arrayBuffer();
+            const res = await EF.autoCropPdfWithCoordinates(buf, test.coordinates, test.id, (c, tot) => {
+              prog.textContent = `Cropping ${c}/${tot}...`;
+            });
+            EF.toast(`Auto-cropped & cached ${res.cropped} diagram(s)!`, "success");
+            finishRecovery();
+          } catch (e) {
+            prog.textContent = "";
+            EF.toast(e.message, "error");
+          }
+        });
+
+        // Auto-crop from local PDF
+        const localPdfIn = document.getElementById("rec-local-pdf-in");
+        document.getElementById("rec-autocrop-local")?.addEventListener("click", () => localPdfIn.click());
+        localPdfIn?.addEventListener("change", async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          const prog = document.getElementById("rec-crop-progress");
+          try {
+            prog.textContent = "Reading PDF...";
+            const buf = await f.arrayBuffer();
+            const res = await EF.autoCropPdfWithCoordinates(buf, test.coordinates, test.id, (c, tot) => {
+              prog.textContent = `Cropping ${c}/${tot}...`;
+            });
+            EF.toast(`Auto-cropped & cached ${res.cropped} diagram(s)!`, "success");
+            finishRecovery();
+          } catch (err) {
+            prog.textContent = "";
+            EF.toast(`Auto-crop failed: ${err.message}`, "error");
+          }
+        });
+
+        // Upload re-cropped ZIP or PNGs
+        const recDrop = document.getElementById("rec-zip-drop");
+        const recIn = document.getElementById("rec-zip-input");
+        const handleRecFiles = async (files) => {
+          const n = await ingestImagesToTestDB(test.id, files, EF.extractRequiredImageKeys(test));
+          if (n > 0) {
+            EF.toast(`Cached ${n} diagram(s) in IndexedDB!`, "success");
+            finishRecovery();
+          }
+        };
+        recDrop.addEventListener("click", () => recIn.click());
+        recDrop.addEventListener("dragover", (e) => { e.preventDefault(); recDrop.classList.add("dragover"); });
+        recDrop.addEventListener("dragleave", () => recDrop.classList.remove("dragover"));
+        recDrop.addEventListener("drop", (e) => { e.preventDefault(); recDrop.classList.remove("dragover"); handleRecFiles(Array.from(e.dataTransfer.files)); });
+        recIn.addEventListener("change", (e) => handleRecFiles(Array.from(e.target.files)));
+
+        document.getElementById("rec-skip-continue").addEventListener("click", finishRecovery);
+      }
+
+      function getIncorrectQuestionIds(testId) {
+        const wrongSet = new Set();
+        EF.state.attempts
+          .filter((a) => a.testId === testId)
+          .forEach((a) => {
+            (a.results || []).forEach((r) => {
+              if (r.status === "wrong") wrongSet.add(String(r.qId));
+            });
+          });
+        return wrongSet;
+      }
+
+      function getBookmarkedQuestionIds(testId) {
+        const bmSet = new Set();
+        Object.values(EF.state.bookmarks || {}).forEach((b) => {
+          if (b.testId === testId) bmSet.add(String(b.qId));
+        });
+        return bmSet;
+      }
+
+      function openPreTestModal(test, defaultMode = "full") {
+        const wrongIds = getIncorrectQuestionIds(test.id);
+        const bmIds = getBookmarkedQuestionIds(test.id);
+        const rules = Object.values(test.markingRules || {});
+
+        EF.openModal(`
+          <div class="modal-head">
+            <h3>${EF.esc(test.title)}</h3>
+            <button class="btn btn-xs" onclick="EF.closeModal()">✕</button>
+          </div>
+
+          <!-- Pre-Test Faith-Inspired Encouragement (Joshua 1:9) -->
+          <div style="padding:14px 16px; border-radius:12px; background:linear-gradient(125deg, #132549, #1E3E78); color:#FFFFFF; margin-bottom:16px;">
+            <p class="serif" style="font-style:italic; font-size:14.5px; line-height:1.55; color:#FFF7E8;">
+              “Be strong and courageous. Do not be afraid.”
+            </p>
+            <div style="font-size:12px; font-weight:700; color:#FCD596; margin-top:4px;">— Joshua 1:9</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; text-align:center;">
+            <div style="padding:10px; border-radius:10px; background:var(--bg-subtle); border:1px solid var(--border-color);">
+              <div style="font-size:18px; font-weight:800;">${test.questions.length}</div>
+              <div style="font-size:11.5px; color:var(--text-secondary);">Questions</div>
+            </div>
+            <div style="padding:10px; border-radius:10px; background:var(--bg-subtle); border:1px solid var(--border-color);">
+              <div style="font-size:18px; font-weight:800;">${test.durationMinutes || 60}m</div>
+              <div style="font-size:11.5px; color:var(--text-secondary);">Duration</div>
+            </div>
+            <div style="padding:10px; border-radius:10px; background:var(--bg-subtle); border:1px solid var(--border-color);">
+              <div style="font-size:18px; font-weight:800;">${test.totalMarks || test.questions.length}</div>
+              <div style="font-size:11.5px; color:var(--text-secondary);">Total Marks</div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:14px;">
+            <label>Select Exam / Retest Mode</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <label style="border:1.5px solid var(--border-color); border-radius:10px; padding:10px; cursor:pointer; display:flex; gap:8px; align-items:flex-start;">
+                <input type="radio" name="retest-mode" value="full" ${defaultMode === "full" ? "checked" : ""} />
+                <div><strong style="font-size:13px;">Full Standard</strong><div style="font-size:11.5px; color:var(--text-secondary);">Original question & option order</div></div>
+              </label>
+              <label style="border:1.5px solid var(--border-color); border-radius:10px; padding:10px; cursor:pointer; display:flex; gap:8px; align-items:flex-start;">
+                <input type="radio" name="retest-mode" value="random" ${defaultMode === "random" ? "checked" : ""} />
+                <div><strong style="font-size:13px;">Randomized Retake</strong><div style="font-size:11.5px; color:var(--text-secondary);">Shuffled questions & options</div></div>
+              </label>
+              <label style="border:1.5px solid var(--border-color); border-radius:10px; padding:10px; cursor:pointer; display:flex; gap:8px; align-items:flex-start; ${wrongIds.size ? "" : "opacity:0.5;"}">
+                <input type="radio" name="retest-mode" value="incorrect" ${defaultMode === "incorrect" && wrongIds.size ? "checked" : ""} ${wrongIds.size ? "" : "disabled"} />
+                <div><strong style="font-size:13px;">Incorrect-Only Drill</strong><div style="font-size:11.5px; color:var(--text-secondary);">${wrongIds.size} previously wrong Q(s)</div></div>
+              </label>
+              <label style="border:1.5px solid var(--border-color); border-radius:10px; padding:10px; cursor:pointer; display:flex; gap:8px; align-items:flex-start; ${bmIds.size ? "" : "opacity:0.5;"}">
+                <input type="radio" name="retest-mode" value="bookmarked" ${defaultMode === "bookmarked" && bmIds.size ? "checked" : ""} ${bmIds.size ? "" : "disabled"} />
+                <div><strong style="font-size:13px;">Bookmarked Revision</strong><div style="font-size:11.5px; color:var(--text-secondary);">${bmIds.size} bookmarked Q(s)</div></div>
+              </label>
+            </div>
+          </div>
+
+          ${rules.length ? `
+            <div style="margin-bottom:14px; font-size:12px; color:var(--text-secondary); background:var(--bg-subtle); padding:10px 12px; border-radius:10px;">
+              <strong>Marking Rules:</strong>
+              ${rules.map((r) => `<span style="margin-right:10px;">${EF.esc(r.section)} (${r.type} ${EF.esc(r.marksGroup)}): <strong>+${r.pos} / -${r.neg}</strong></span>`).join("")}
+            </div>
+          ` : ""}
+
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
+            💡 <strong>Exam Ergonomics:</strong> Right-click any option to strike it through · Shortcuts: <code>A–D</code> select, <code>←/→</code> navigate, <code>M</code> mark for review, <code>B</code> bookmark · Distraction-free fullscreen workspace.
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn btn-outline" onclick="EF.closeModal()">Cancel</button>
+            <button class="btn btn-primary" id="btn-confirm-start-exam">🚀 Begin Distraction-Free Exam</button>
+          </div>
+        `, true);
+
+        document.getElementById("btn-confirm-start-exam").addEventListener("click", () => {
+          const mode = document.querySelector('input[name="retest-mode"]:checked')?.value || "full";
+          EF.closeModal();
+          startExamSession(test, mode);
+        });
+      }
+
+      /* -----------------------------------------------------------------
+         3. DIAGRAM MANAGER VIEW (INDEXEDDB + CTRL+V + COORDINATES)
+         ----------------------------------------------------------------- */
+      let diagramSelectedTestId = "";
+      let activePasteSlotKey = "";
+
+      EF.renderDiagramManager = async function () {
+        const container = document.getElementById("view-diagrams");
+        const tests = EF.state.tests || [];
+        if (!tests.length) {
+          container.innerHTML = `
+            <div class="page-header"><div><h2>Diagram Manager</h2><p>Manage local IndexedDB WebP diagrams, image options, and crop coordinates.</p></div></div>
+            <div class="card" style="text-align:center; padding:44px;">Import a test first to manage its diagrams.</div>`;
+          return;
+        }
+        if (!diagramSelectedTestId || !tests.some((t) => t.id === diagramSelectedTestId)) {
+          diagramSelectedTestId = tests[0].id;
+        }
+        const test = tests.find((t) => t.id === diagramSelectedTestId);
+        const reqKeys = EF.extractRequiredImageKeys(test);
+        const cachedItems = await EF.ImageDB.getTestImages(test.id);
+        const cachedMap = new Map(cachedItems.map((it) => [it.key, it]));
+        const allKeys = Array.from(new Set([...reqKeys, ...cachedItems.map((i) => i.key)]));
+
+        EF.revokeTempUrls();
+        const urlMap = {};
+        for (const it of cachedItems) {
+          const u = URL.createObjectURL(it.blob);
+          EF._blobUrls.push(u);
+          urlMap[it.key] = u;
+        }
+
+        const totalBytes = cachedItems.reduce((s, i) => s + (i.size || 0), 0);
+
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h2>Diagram Manager (IndexedDB WebP Cache)</h2>
+              <p>Click any slot and press <strong>Ctrl+V</strong> to paste a screenshot directly, upload a <code>.zip</code>, or export a local backup.</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <select class="select" id="dm-test-select" style="width:auto; min-width:240px;">
+                ${tests.map((t) => `<option value="${t.id}" ${t.id === test.id ? "selected" : ""}>${EF.esc(t.title)}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <span class="badge badge-blue">${cachedItems.length} Cached (${EF.fmtBytes(totalBytes)})</span>
+              <span class="badge ${reqKeys.every((k) => cachedMap.has(k)) ? "badge-green" : "badge-gold"}">${reqKeys.filter((k) => cachedMap.has(k)).length}/${reqKeys.length} JSON Slots Ready</span>
+              ${test.coordinates ? `<span class="badge badge-purple">📐 ${Object.keys(test.coordinates).length} Coords Saved</span>` : `<span class="badge badge-neutral">No Coordinates</span>`}
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input type="file" id="dm-bulk-in" accept=".zip,image/*" multiple class="hidden" />
+              <button class="btn btn-primary btn-sm" id="dm-bulk-btn">🗜️ Upload .zip / Images</button>
+              <input type="file" id="dm-coords-in" accept=".json,.txt" class="hidden" />
+              <button class="btn btn-outline btn-sm" id="dm-coords-btn">📐 Upload Coordinates</button>
+              ${cachedItems.length ? `<button class="btn btn-soft btn-sm" id="dm-export-zip">⬇️ Export .zip</button>` : ""}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Image Slots for "${EF.esc(test.title)}"</div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input class="input" id="dm-custom-key" placeholder="Add custom key (e.g. q5_optA)" style="width:200px; padding:6px 10px;" />
+                <button class="btn btn-outline btn-xs" id="dm-add-slot">＋ Select Slot</button>
+              </div>
+            </div>
+
+            ${allKeys.length === 0 ? `
+              <p style="font-size:13.5px; color:var(--text-secondary); padding:18px 0;">
+                No <code>[IMG:key]</code> placeholders found in this test's JSON. You can still add a custom key above or upload a ZIP.
+              </p>
+            ` : `
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px;">
+                ${allKeys.map((k) => {
+                  const rec = cachedMap.get(k);
+                  const isActive = activePasteSlotKey === k;
+                  return `
+                    <div class="dm-slot-card" data-key="${EF.esc(k)}" style="border:2px solid ${isActive ? "var(--brand-blue)" : "var(--border-color)"}; border-radius:12px; padding:12px; background:var(--bg-subtle); cursor:pointer;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span class="mono" style="font-size:12px; font-weight:700;">${EF.esc(k)}</span>
+                        <span class="badge ${rec ? "badge-green" : "badge-gold"}" style="font-size:10px;">${rec ? EF.fmtBytes(rec.size) : "Missing"}</span>
+                      </div>
+                      <div style="height:125px; background:#FFFFFF; border-radius:8px; border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:9px;">
+                        ${rec ? `<img src="${urlMap[k]}" style="max-width:100%; max-height:100%; object-fit:contain;" />` : `<span style="font-size:12px; color:#8A9BB5;">Click & Ctrl+V to paste</span>`}
+                      </div>
+                      <div style="display:flex; gap:6px;">
+                        <button class="btn btn-outline btn-xs dm-pick-one" data-key="${EF.esc(k)}" style="flex:1;">Upload</button>
+                        ${rec ? `<button class="btn btn-danger-soft btn-xs dm-del-one" data-key="${EF.esc(k)}">✕</button>` : ""}
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            `}
+            <input type="file" id="dm-single-in" accept="image/*" class="hidden" />
+          </div>
+        `;
+
+        document.getElementById("dm-test-select").addEventListener("change", (e) => {
+          diagramSelectedTestId = e.target.value;
+          activePasteSlotKey = "";
+          EF.renderDiagramManager();
+        });
+
+        const bulkIn = document.getElementById("dm-bulk-in");
+        document.getElementById("dm-bulk-btn").addEventListener("click", () => bulkIn.click());
+        bulkIn.addEventListener("change", async (e) => {
+          const n = await ingestImagesToTestDB(test.id, Array.from(e.target.files), reqKeys);
+          if (n) EF.toast(`Cached ${n} image(s) into IndexedDB.`, "success");
+          EF.renderDiagramManager();
+        });
+
+        const coordsIn = document.getElementById("dm-coords-in");
+        document.getElementById("dm-coords-btn").addEventListener("click", () => coordsIn.click());
+        coordsIn.addEventListener("change", async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          try {
+            const raw = (await f.text()).trim();
+            const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+            test.coordinates = JSON.parse(fence ? fence[1] : raw);
+            await EF.saveTest(test);
+            EF.toast(`Saved ${Object.keys(test.coordinates).length} coordinates.`, "success");
+            EF.renderDiagramManager();
+          } catch (err) { EF.toast(err.message, "error"); }
+        });
+
+        document.getElementById("dm-export-zip")?.addEventListener("click", async () => {
+          const zip = new JSZip();
+          for (const it of cachedItems) zip.file(`${it.key}.webp`, it.blob);
+          const out = await zip.generateAsync({ type: "blob" });
+          const u = URL.createObjectURL(out);
+          const a = document.createElement("a");
+          a.href = u;
+          a.download = `${test.title.replace(/[^a-z0-9]+/gi, "_")}_diagrams.zip`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(u), 4000);
+        });
+
+        document.getElementById("dm-add-slot").addEventListener("click", () => {
+          const k = document.getElementById("dm-custom-key").value.trim();
+          if (!k) return;
+          activePasteSlotKey = k;
+          EF.toast(`Slot "${k}" armed! Press Ctrl+V to paste an image from clipboard.`, "info");
+        });
+
+        const singleIn = document.getElementById("dm-single-in");
+        let singleTargetKey = "";
+        container.querySelectorAll(".dm-slot-card").forEach((card) => {
+          card.addEventListener("click", () => {
+            activePasteSlotKey = card.dataset.key;
+            container.querySelectorAll(".dm-slot-card").forEach((c) => {
+              c.style.borderColor = c.dataset.key === activePasteSlotKey ? "var(--brand-blue)" : "var(--border-color)";
+            });
+            EF.toast(`Slot "${activePasteSlotKey}" selected — press Ctrl+V to paste image.`, "info");
+          });
+        });
+
+        container.querySelectorAll(".dm-pick-one").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            singleTargetKey = btn.dataset.key;
+            singleIn.click();
+          });
+        });
+        singleIn.addEventListener("change", async (e) => {
+          const f = e.target.files[0];
+          if (!f || !singleTargetKey) return;
+          await EF.ImageDB.putImage(test.id, singleTargetKey, f);
+          EF.toast(`Updated image "${singleTargetKey}".`, "success");
+          EF.renderDiagramManager();
+        });
+
+        container.querySelectorAll(".dm-del-one").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            await EF.ImageDB.deleteImage(test.id, btn.dataset.key);
+            EF.toast(`Deleted "${btn.dataset.key}".`, "info");
+            EF.renderDiagramManager();
+          });
+        });
+      };
+
+      // Global Ctrl+V clipboard paste listener for Diagram Manager
+      window.addEventListener("paste", async (e) => {
+        if (EF.state.currentView !== "diagrams" || !diagramSelectedTestId || !activePasteSlotKey) return;
+        const items = e.clipboardData?.items || [];
+        for (const it of items) {
+          if (it.type.startsWith("image/")) {
+            e.preventDefault();
+            const file = it.getAsFile();
+            if (file) {
+              await EF.ImageDB.putImage(diagramSelectedTestId, activePasteSlotKey, file);
+              EF.toast(`Pasted clipboard image into "${activePasteSlotKey}"!`, "success");
+              EF.renderDiagramManager();
+            }
+            break;
+          }
+        }
+      });
+
+      /* -----------------------------------------------------------------
+         4. DISTRACTION-FREE FULLSCREEN EXAM ENGINE + CRASH-SAFE TIMER
+         (100% STRICT LIGHT THEME — ZERO BIBLICAL ELEMENTS)
+         ----------------------------------------------------------------- */
+      let exam = null; // Active session object
+      let timerInterval = null;
+      let qStartTimeMs = 0;
+
+      function persistCrashState() {
+        if (!exam || exam.reviewMode) return;
+        try { localStorage.setItem(CRASH_STORAGE_KEY, JSON.stringify(exam)); } catch {}
+      }
+
+      function clearCrashState() {
+        localStorage.removeItem(CRASH_STORAGE_KEY);
+      }
+
+      function recordCurrentQuestionTime() {
+        if (!exam || exam.reviewMode || !qStartTimeMs) return;
+        const q = exam.questions[exam.currentIdx];
+        if (!q) return;
+        const deltaSec = (Date.now() - qStartTimeMs) / 1000;
+        if (deltaSec > 0 && deltaSec < 7200) {
+          exam.timeSpent[q.id] = Number(((exam.timeSpent[q.id] || 0) + deltaSec).toFixed(1));
+        }
+        qStartTimeMs = Date.now();
+      }
+
+      function startExamSession(test, mode = "full") {
+        let qs = JSON.parse(JSON.stringify(test.questions || []));
+        if (mode === "incorrect") {
+          const wrongIds = getIncorrectQuestionIds(test.id);
+          qs = qs.filter((q) => wrongIds.has(String(q.id)));
+        } else if (mode === "bookmarked") {
+          const bmIds = getBookmarkedQuestionIds(test.id);
+          qs = qs.filter((q) => bmIds.has(String(q.id)));
+        } else if (mode === "random") {
+          qs = shuffleArray(qs).map(cloneAndShuffleQuestion);
+        }
+
+        if (!qs.length) {
+          return EF.toast("No questions match this retest mode.", "warn");
+        }
+
+        // Proportionally scale duration for subset drills
+        const baseDur = Number(test.durationMinutes || 60);
+        const durMin = (mode === "incorrect" || mode === "bookmarked")
+          ? Math.max(5, Math.round((qs.length / Math.max(1, test.questions.length)) * baseDur))
+          : baseDur;
+
+        exam = {
+          sessionId: EF.uid("sess"),
+          testId: test.id,
+          testTitle: test.title,
+          examTrack: test.exam || "General",
+          subject: test.subject || "Engineering",
+          mode,
+          markingRules: test.markingRules || {},
+          questions: qs,
+          sections: Array.from(new Set(qs.map((q) => q.section || "General"))),
+          durationSec: durMin * 60,
+          startedAt: Date.now(),
+          deadlineTs: Date.now() + durMin * 60 * 1000,
+          currentIdx: 0,
+          responses: {},     // qId -> number | number[] | string
+          marked: {},        // qId -> boolean
+          visited: { [qs[0].id]: true },
+          eliminated: {},    // qId -> { optIdx: true }
+          timeSpent: {},     // qId -> seconds
+          reviewMode: false,
+          attemptData: null
+        };
+
+        persistCrashState();
+        openExamWorkspace();
+      }
+
+      function openExamWorkspace() {
+        const ws = document.getElementById("exam-workspace");
+        ws.classList.add("active");
+        qStartTimeMs = Date.now();
+        try { document.documentElement.requestFullscreen?.().catch(() => {}); } catch {}
+        renderExamWorkspace();
+        startDeadlineTicker();
+      }
+
+      function closeExamWorkspace() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        EF.revokeTempUrls();
+        const ws = document.getElementById("exam-workspace");
+        ws.classList.remove("active");
+        ws.innerHTML = "";
+        exam = null;
+        try { if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {}); } catch {}
+      }
+
+      function startDeadlineTicker() {
+        clearInterval(timerInterval);
+        if (!exam || exam.reviewMode) return;
+        const tick = () => {
+          if (!exam || exam.reviewMode) return;
+          const remSec = Math.max(0, Math.ceil((exam.deadlineTs - Date.now()) / 1000));
+          const el = document.getElementById("exam-timer-display");
+          if (el) {
+            const hrs = Math.floor(remSec / 3600);
+            const mins = Math.floor((remSec % 3600) / 60);
+            const secs = remSec % 60;
+            el.textContent = `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+            el.classList.toggle("urgent", remSec <= 300);
+          }
+          if (remSec <= 0) {
+            clearInterval(timerInterval);
+            EF.toast("Time is up! Submitting exam automatically.", "warn");
+            submitExamSession(true);
+          }
+        };
+        tick();
+        timerInterval = setInterval(tick, 1000);
+      }
+
+      function getPaletteStatusClass(q) {
+        const qId = q.id;
+        const answered = !isResponseEmpty(q.type, exam.responses[qId]);
+        const isMarked = Boolean(exam.marked[qId]);
+        const isVisited = Boolean(exam.visited[qId]);
+        if (answered && isMarked) return "st-ans-marked";
+        if (isMarked) return "st-marked";
+        if (answered) return "st-answered";
+        if (isVisited) return "st-not-answered";
+        return "";
+      }
+
+      async function renderExamWorkspace() {
+        if (!exam) return;
+        const ws = document.getElementById("exam-workspace");
+        const q = exam.questions[exam.currentIdx];
+        exam.visited[q.id] = true;
+        persistCrashState();
+
+        const rule = exam.markingRules[EF.getMarkingRuleKey(q)] || { pos: 1, neg: q.type === "MCQ" ? 0.33 : 0 };
+        const isBm = Boolean(EF.state.bookmarks[`${exam.testId}::${q.id}`]);
+        const isMarked = Boolean(exam.marked[q.id]);
+        const resp = exam.responses[q.id];
+        const elim = exam.eliminated[q.id] || {};
+
+        EF.revokeTempUrls();
+        const passageHtml = q.passage ? await EF.renderRichContent(q.passage, exam.testId) : "";
+        let qHtml = await EF.renderRichContent(q.question, exam.testId);
+        if (q.image && !q.question.includes(`[IMG:${q.image}]`)) {
+          qHtml += await EF.renderRichContent(`[IMG:${q.image}]`, exam.testId);
+        }
+        const optHtmls = [];
+        for (const o of (q.options || [])) {
+          optHtmls.push(await EF.renderRichContent(o, exam.testId));
+        }
+        const expHtml = (exam.reviewMode && q.explanation)
+          ? await EF.renderRichContent(q.explanation, exam.testId)
+          : "";
+
+        const evalRes = exam.reviewMode ? evaluateQuestion(q, resp, exam.markingRules) : null;
+
+        ws.innerHTML = `
+          <!-- Strict Distraction-Free Topbar -->
+          <div class="exam-topbar">
+            <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+              <strong style="font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:360px;">
+                ${EF.esc(exam.testTitle)}
+              </strong>
+              <span class="badge badge-blue">${exam.reviewMode ? "Solution Review" : exam.mode.toUpperCase()}</span>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px;">
+              ${exam.reviewMode ? `
+                <span class="badge badge-green" style="font-size:13px; padding:6px 12px;">
+                  Score: ${exam.attemptData.score.toFixed(2)} / ${exam.attemptData.maxScore} (${exam.attemptData.percentage.toFixed(1)}%)
+                </span>
+                <button class="btn btn-navy btn-sm" id="ex-close-review">Exit Review</button>
+              ` : `
+                <div class="exam-timer" id="exam-timer-display">--:--:--</div>
+                <button class="btn btn-outline btn-sm" id="ex-toggle-palette" style="display:none;">Palette</button>
+                <button class="btn btn-success btn-sm" id="ex-submit-btn">Submit Test</button>
+              `}
+            </div>
+          </div>
+
+          <!-- Section Switcher Bar -->
+          <div class="exam-section-bar">
+            ${exam.sections.map((sec) => {
+              const active = (q.section || "General") === sec;
+              const secCount = exam.questions.filter((x) => (x.section || "General") === sec).length;
+              return `<button class="sec-pill ${active ? "active" : ""}" data-sec="${EF.esc(sec)}">${EF.esc(sec)} (${secCount})</button>`;
+            }).join("")}
+            <div style="margin-left:auto; font-size:12px; color:#526480; white-space:nowrap;">
+              Right-click option to strike-through
+            </div>
+          </div>
+
+          <!-- Body: Question Pane + Persistent Palette -->
+          <div class="exam-body">
+            <div class="exam-main" id="exam-q-scroll">
+              <div class="exam-q-card">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding-bottom:12px; margin-bottom:14px; border-bottom:1px solid #E4ECF7;">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:15px; font-weight:800; color:#14223B;">Question ${exam.currentIdx + 1} of ${exam.questions.length}</span>
+                    <span class="badge ${q.type === "MCQ" ? "badge-blue" : q.type === "MSQ" ? "badge-purple" : "badge-gold"}">${q.type}</span>
+                    <span class="badge badge-neutral">+${rule.pos} / −${rule.neg}</span>
+                    ${exam.reviewMode ? `
+                      <span class="badge ${evalRes.status === "correct" ? "badge-green" : evalRes.status === "wrong" ? "badge-red" : "badge-neutral"}">
+                        ${evalRes.status === "correct" ? `Correct (+${evalRes.marks})` : evalRes.status === "wrong" ? `Incorrect (${evalRes.marks})` : "Unattempted (0)"}
+                      </span>
+                      <span class="badge badge-neutral">⏱️ ${(exam.timeSpent[q.id] || 0).toFixed(0)}s</span>
+                    ` : ""}
+                  </div>
+
+                  <button class="btn ${isBm ? "btn-soft" : "btn-outline"} btn-xs" id="ex-bookmark-btn">
+                    ${isBm ? "🔖 Bookmarked" : "🔖 Bookmark"}
+                  </button>
+                </div>
+
+                ${passageHtml ? `
+                  <div class="exam-passage-box">
+                    <div style="font-size:11.5px; font-weight:700; color:#1D4ED8; text-transform:uppercase; margin-bottom:5px;">Shared Passage</div>
+                    <div>${passageHtml}</div>
+                  </div>
+                ` : ""}
+
+                <div class="exam-q-text">${qHtml}</div>
+
+                ${(q.type === "MCQ" || q.type === "MSQ") ? `
+                  <div class="exam-options">
+                    ${optHtmls.map((oh, idx) => {
+                      const letter = String.fromCharCode(65 + idx);
+                      const isSel = q.type === "MCQ"
+                        ? (resp !== undefined && resp !== "" && Number(resp) === idx)
+                        : (Array.isArray(resp) && resp.includes(idx));
+                      const isElim = !exam.reviewMode && Boolean(elim[idx]);
+
+                      let revClass = "";
+                      if (exam.reviewMode) {
+                        const isAns = q.type === "MCQ"
+                          ? Number(q.answer) === idx
+                          : (Array.isArray(q.answer) && q.answer.includes(idx));
+                        if (isAns) revClass = "review-correct";
+                        else if (isSel && !isAns) revClass = "review-wrong";
+                      }
+
+                      return `
+                        <div class="exam-opt ${isSel ? "selected" : ""} ${isElim ? "eliminated" : ""} ${revClass}" data-opt-idx="${idx}">
+                          <div class="exam-opt-key">${letter}</div>
+                          <div class="exam-opt-content">${oh}</div>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
+                ` : `
+                  <div class="exam-nat-wrap">
+                    <label style="display:block; font-size:12.5px; font-weight:700; color:#475B78; margin-bottom:6px;">
+                      Numerical Answer (decimals & negative sign allowed):
+                    </label>
+                    <input
+                      id="ex-nat-input"
+                      class="exam-nat-input"
+                      type="text"
+                      inputmode="decimal"
+                      placeholder="Enter numeric value..."
+                      value="${EF.esc(resp ?? "")}"
+                      ${exam.reviewMode ? "disabled" : ""}
+                    />
+                    ${exam.reviewMode ? `
+                      <div style="margin-top:8px; font-size:13px;">
+                        <strong>Accepted Range:</strong> <span class="badge badge-green mono">${EF.esc(formatExpectedAnswer(q))}</span>
+                      </div>
+                    ` : ""}
+                  </div>
+                `}
+
+                ${exam.reviewMode ? `
+                  <div style="margin-top:20px; padding:16px; border-radius:12px; background:#F7FAFF; border:1px solid #CFE0F7;">
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                      <strong style="color:#1A3A73;">Detailed Solution & Answer Key</strong>
+                      <span style="font-size:12.5px;">
+                        Your Answer: <strong>${EF.esc(formatUserAnswer(q, resp))}</strong> ·
+                        Correct: <strong style="color:#168A5C;">${EF.esc(formatExpectedAnswer(q))}</strong>
+                      </span>
+                    </div>
+                    <div style="font-size:14px; line-height:1.68; color:#1E2E4A;">
+                      ${expHtml || "<em>No explanation provided for this question.</em>"}
+                    </div>
+                  </div>
+                ` : ""}
+              </div>
+            </div>
+
+            <!-- Question Palette -->
+            <aside class="exam-palette-pane" id="exam-palette-pane">
+              <div style="padding:12px 14px; font-weight:700; font-size:13.5px; border-bottom:1px solid #E5ECF6; display:flex; justify-content:space-between;">
+                <span>Question Palette</span>
+                <span style="font-size:12px; color:#5A6E8C;">${Object.keys(exam.responses).filter((id) => !isResponseEmpty((exam.questions.find((x) => String(x.id) === String(id)) || {}).type, exam.responses[id])).length}/${exam.questions.length} Ans</span>
+              </div>
+              <div class="palette-legend">
+                <div><span class="legend-dot" style="background:#168A5C;"></span>Answered</div>
+                <div><span class="legend-dot" style="background:#E3535F;"></span>Unanswered</div>
+                <div><span class="legend-dot" style="background:#6D4AFF;"></span>Marked</div>
+                <div><span class="legend-dot" style="background:#F59E0B;"></span>Bookmarked</div>
+              </div>
+              <div class="palette-grid">
+                ${exam.questions.map((item, i) => {
+                  let cls = "";
+                  if (exam.reviewMode) {
+                    const ev = evaluateQuestion(item, exam.responses[item.id], exam.markingRules);
+                    cls = ev.status === "correct" ? "st-answered" : ev.status === "wrong" ? "st-not-answered" : "";
+                  } else {
+                    cls = getPaletteStatusClass(item);
+                  }
+                  const hasBm = Boolean(EF.state.bookmarks[`${exam.testId}::${item.id}`]);
+                  return `
+                    <button class="pal-btn ${cls} ${i === exam.currentIdx ? "current" : ""}" data-qidx="${i}">
+                      ${i + 1}
+                      ${hasBm ? `<span class="bm-dot" title="Bookmarked"></span>` : ""}
+                    </button>
+                  `;
+                }).join("")}
+              </div>
+            </aside>
+          </div>
+
+          <!-- Action Footer -->
+          <div class="exam-footer">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              ${!exam.reviewMode ? `
+                <button class="btn btn-outline btn-sm" id="ex-mark-btn">${isMarked ? "★ Unmark Review" : "☆ Mark for Review"}</button>
+                <button class="btn btn-outline btn-sm" id="ex-clear-btn">Clear Response</button>
+              ` : `
+                <button class="btn btn-soft btn-sm" id="ex-review-summary">📊 Score Summary</button>
+              `}
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-outline btn-sm" id="ex-prev-btn" ${exam.currentIdx === 0 ? "disabled style='opacity:0.45;'" : ""}>← Previous</button>
+              <button class="btn btn-primary btn-sm" id="ex-next-btn">
+                ${exam.currentIdx === exam.questions.length - 1 ? (exam.reviewMode ? "Finish Review" : "Save & Review Palette") : "Save & Next →"}
+              </button>
+            </div>
+          </div>
+        `;
+
+        // Responsive palette toggle visibility
+        const palToggle = document.getElementById("ex-toggle-palette");
+        if (palToggle && window.innerWidth <= 900) {
+          palToggle.style.display = "inline-flex";
+          palToggle.addEventListener("click", () => {
+            document.getElementById("exam-palette-pane").classList.toggle("mobile-show");
+          });
+        }
+
+        // Typeset MathJax inside question container
+        EF.typesetMath(document.getElementById("exam-q-scroll"));
+
+        // Bind Exam Interactions
+        ws.querySelectorAll(".sec-pill").forEach((pill) => {
+          pill.addEventListener("click", () => {
+            const firstIdx = exam.questions.findIndex((x) => (x.section || "General") === pill.dataset.sec);
+            if (firstIdx >= 0) jumpToQuestion(firstIdx);
+          });
+        });
+
+        ws.querySelectorAll(".pal-btn").forEach((btn) => {
+          btn.addEventListener("click", () => jumpToQuestion(Number(btn.dataset.qidx)));
+        });
+
+        document.getElementById("ex-bookmark-btn").addEventListener("click", async () => {
+          await EF.toggleBookmark(exam.testId, q.id, { testTitle: exam.testTitle, section: q.section || "General" });
+          renderExamWorkspace();
+        });
+
+        if (!exam.reviewMode) {
+          // Option Click + Right-Click Strike-Through
+          ws.querySelectorAll(".exam-opt").forEach((optEl) => {
+            const optIdx = Number(optEl.dataset.optIdx);
+            optEl.addEventListener("click", () => {
+              if (q.type === "MCQ") {
+                exam.responses[q.id] = optIdx;
+              } else if (q.type === "MSQ") {
+                const cur = new Set(Array.isArray(exam.responses[q.id]) ? exam.responses[q.id] : []);
+                if (cur.has(optIdx)) cur.delete(optIdx); else cur.add(optIdx);
+                exam.responses[q.id] = Array.from(cur).sort((a, b) => a - b);
+              }
+              persistCrashState();
+              renderExamWorkspace();
+            });
+            optEl.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              if (!exam.eliminated[q.id]) exam.eliminated[q.id] = {};
+              exam.eliminated[q.id][optIdx] = !exam.eliminated[q.id][optIdx];
+              persistCrashState();
+              optEl.classList.toggle("eliminated", Boolean(exam.eliminated[q.id][optIdx]));
+            });
+          });
+
+          const natIn = document.getElementById("ex-nat-input");
+          if (natIn) {
+            natIn.addEventListener("input", (e) => {
+              exam.responses[q.id] = e.target.value;
+              persistCrashState();
+            });
+          }
+
+          document.getElementById("ex-mark-btn").addEventListener("click", () => {
+            exam.marked[q.id] = !exam.marked[q.id];
+            persistCrashState();
+            renderExamWorkspace();
+          });
+
+          document.getElementById("ex-clear-btn").addEventListener("click", () => {
+            delete exam.responses[q.id];
+            persistCrashState();
+            renderExamWorkspace();
+          });
+
+          document.getElementById("ex-submit-btn").addEventListener("click", () => confirmSubmitExam());
+        } else {
+          document.getElementById("ex-close-review").addEventListener("click", () => {
+            closeExamWorkspace();
+            EF.navigate("analytics");
+          });
+          document.getElementById("ex-review-summary").addEventListener("click", () => {
+            showPostTestSummaryModal(exam.attemptData, true);
+          });
+        }
+
+        document.getElementById("ex-prev-btn").addEventListener("click", () => {
+          if (exam.currentIdx > 0) jumpToQuestion(exam.currentIdx - 1);
+        });
+        document.getElementById("ex-next-btn").addEventListener("click", () => {
+          if (exam.currentIdx < exam.questions.length - 1) {
+            jumpToQuestion(exam.currentIdx + 1);
+          } else if (exam.reviewMode) {
+            closeExamWorkspace();
+            EF.navigate("analytics");
+          } else {
+            confirmSubmitExam();
+          }
+        });
+      }
+
+      function jumpToQuestion(idx) {
+        if (!exam) return;
+        recordCurrentQuestionTime();
+        exam.currentIdx = Math.max(0, Math.min(exam.questions.length - 1, idx));
+        renderExamWorkspace();
+      }
+
+      // Keyboard Shortcuts Inside Active Exam
+      window.addEventListener("keydown", (e) => {
+        if (!exam || exam.reviewMode) return;
+        if (document.getElementById("modal-root").innerHTML.trim() !== "") return;
+        const tag = (e.target.tagName || "").toLowerCase();
+        if (tag === "input" || tag === "textarea") return;
+
+        const q = exam.questions[exam.currentIdx];
+        const k = e.key.toLowerCase();
+
+        if (e.key === "ArrowRight" || k === "n") {
+          e.preventDefault();
+          if (exam.currentIdx < exam.questions.length - 1) jumpToQuestion(exam.currentIdx + 1);
+        } else if (e.key === "ArrowLeft" || k === "p") {
+          e.preventDefault();
+          if (exam.currentIdx > 0) jumpToQuestion(exam.currentIdx - 1);
+        } else if (k === "m") {
+          exam.marked[q.id] = !exam.marked[q.id];
+          persistCrashState();
+          renderExamWorkspace();
+        } else if (k === "b") {
+          EF.toggleBookmark(exam.testId, q.id, { testTitle: exam.testTitle, section: q.section || "General" }).then(() => renderExamWorkspace());
+        } else if (k === "c") {
+          delete exam.responses[q.id];
+          persistCrashState();
+          renderExamWorkspace();
+        } else if ((q.type === "MCQ" || q.type === "MSQ") && ["a", "b", "c", "d", "1", "2", "3", "4"].includes(k)) {
+          const map = { a: 0, b: 1, c: 2, d: 3, "1": 0, "2": 1, "3": 2, "4": 3 };
+          const idx = map[k];
+          if (idx < (q.options || []).length) {
+            if (q.type === "MCQ") exam.responses[q.id] = idx;
+            else {
+              const cur = new Set(Array.isArray(exam.responses[q.id]) ? exam.responses[q.id] : []);
+              if (cur.has(idx)) cur.delete(idx); else cur.add(idx);
+              exam.responses[q.id] = Array.from(cur).sort((a, b) => a - b);
+            }
+            persistCrashState();
+            renderExamWorkspace();
+          }
+        }
+      });
+
+      function confirmSubmitExam() {
+        recordCurrentQuestionTime();
+        const total = exam.questions.length;
+        const ans = exam.questions.filter((q) => !isResponseEmpty(q.type, exam.responses[q.id])).length;
+        const marked = exam.questions.filter((q) => exam.marked[q.id]).length;
+
+        EF.openModal(`
+          <div class="modal-head">
+            <h3>Submit Examination?</h3>
+            <button class="btn btn-xs" onclick="EF.closeModal()">✕</button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; text-align:center; margin-bottom:18px;">
+            <div style="padding:12px; border-radius:10px; background:var(--brand-green-soft); color:var(--brand-green);">
+              <div style="font-size:20px; font-weight:800;">${ans}</div><div style="font-size:12px;">Answered</div>
+            </div>
+            <div style="padding:12px; border-radius:10px; background:var(--brand-red-soft); color:var(--brand-red);">
+              <div style="font-size:20px; font-weight:800;">${total - ans}</div><div style="font-size:12px;">Unanswered</div>
+            </div>
+            <div style="padding:12px; border-radius:10px; background:var(--brand-purple-soft); color:var(--brand-purple);">
+              <div style="font-size:20px; font-weight:800;">${marked}</div><div style="font-size:12px;">Marked</div>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn btn-outline" onclick="EF.closeModal()">Resume Exam</button>
+            <button class="btn btn-success" id="btn-final-submit">Confirm & Evaluate</button>
+          </div>
+        `);
+
+        document.getElementById("btn-final-submit").addEventListener("click", () => {
+          EF.closeModal();
+          submitExamSession(false);
+        });
+      }
+
+      async function submitExamSession(autoSubmitted = false) {
+        recordCurrentQuestionTime();
+        clearInterval(timerInterval);
+        clearCrashState();
+
+        let score = 0, maxScore = 0, correct = 0, wrong = 0, unattempted = 0;
+        const sectionStats = {};
+        const results = [];
+
+        exam.questions.forEach((q, idx) => {
+          const resp = exam.responses[q.id];
+          const ev = evaluateQuestion(q, resp, exam.markingRules);
+          const sec = q.section || "General";
+          if (!sectionStats[sec]) sectionStats[sec] = { correct: 0, wrong: 0, unattempted: 0, score: 0, maxScore: 0 };
+
+          score += ev.marks;
+          maxScore += ev.maxMarks;
+          sectionStats[sec].score += ev.marks;
+          sectionStats[sec].maxScore += ev.maxMarks;
+
+          if (ev.status === "correct") { correct++; sectionStats[sec].correct++; }
+          else if (ev.status === "wrong") { wrong++; sectionStats[sec].wrong++; }
+          else { unattempted++; sectionStats[sec].unattempted++; }
+
+          results.push({
+            qNum: idx + 1,
+            qId: q.id,
+            section: sec,
+            type: q.type,
+            status: ev.status,
+            marks: Number(ev.marks.toFixed(2)),
+            maxMarks: ev.maxMarks,
+            timeSec: Number((exam.timeSpent[q.id] || 0).toFixed(1)),
+            userAnswer: resp ?? null
+          });
+        });
+
+        const attempted = correct + wrong;
+        const accuracy = attempted ? Number(((correct / attempted) * 100).toFixed(1)) : 0;
+        const percentage = maxScore ? Number(((Math.max(0, score) / maxScore) * 100).toFixed(1)) : 0;
+        const totalTimeSec = Math.max(1, Math.round((Date.now() - exam.startedAt) / 1000));
+
+        const attemptObj = {
+          id: EF.uid("att"),
+          testId: exam.testId,
+          testTitle: exam.testTitle,
+          exam: exam.examTrack,
+          subject: exam.subject,
+          mode: exam.mode,
+          score: Number(score.toFixed(2)),
+          maxScore: Number(maxScore.toFixed(2)),
+          percentage,
+          accuracy,
+          correct,
+          wrong,
+          unattempted,
+          totalQuestions: exam.questions.length,
+          totalTimeSec,
+          autoSubmitted,
+          sectionStats,
+          results,
+          submittedAt: Date.now()
+        };
+
+        await EF.saveAttempt(attemptObj);
+        await EF.logActivity("✅", `${exam.testTitle} · Score: ${percentage}% (${accuracy}% acc)`, "green");
+
+        // Switch exam workspace into Solution Review Mode
+        exam.reviewMode = true;
+        exam.attemptData = attemptObj;
+        exam.currentIdx = 0;
+        renderExamWorkspace();
+        showPostTestSummaryModal(attemptObj, false);
+      }
+
+      function showPostTestSummaryModal(att, alreadyReviewing) {
+        const mins = Math.floor((att.totalTimeSec || 0) / 60);
+        const secs = (att.totalTimeSec || 0) % 60;
+
+        EF.openModal(`
+          <div class="modal-head">
+            <h3>📊 Performance Report — ${EF.esc(att.testTitle)}</h3>
+            <button class="btn btn-xs" onclick="EF.closeModal()">✕</button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; text-align:center; margin-bottom:16px;">
+            <div style="padding:12px; border-radius:11px; background:var(--brand-blue-soft); color:var(--brand-navy);">
+              <div style="font-size:20px; font-weight:800;">${att.score} / ${att.maxScore}</div>
+              <div style="font-size:11.5px;">Net Score (${att.percentage}%)</div>
+            </div>
+            <div style="padding:12px; border-radius:11px; background:var(--brand-green-soft); color:var(--brand-green);">
+              <div style="font-size:20px; font-weight:800;">${att.accuracy}%</div>
+              <div style="font-size:11.5px;">Accuracy (${att.correct}✓ / ${att.wrong}✕)</div>
+            </div>
+            <div style="padding:12px; border-radius:11px; background:var(--brand-gold-soft); color:var(--brand-gold);">
+              <div style="font-size:20px; font-weight:800;">${att.unattempted}</div>
+              <div style="font-size:11.5px;">Unattempted</div>
+            </div>
+            <div style="padding:12px; border-radius:11px; background:var(--bg-subtle); border:1px solid var(--border-color);">
+              <div style="font-size:20px; font-weight:800;">${mins}m ${secs}s</div>
+              <div style="font-size:11.5px;">Time Taken</div>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="margin-bottom:16px;">
+            <table>
+              <thead><tr><th>Section</th><th>Correct</th><th>Wrong</th><th>Skipped</th><th>Net Score</th></tr></thead>
+              <tbody>
+                ${Object.entries(att.sectionStats || {}).map(([sec, st]) => `
+                  <tr>
+                    <td><strong>${EF.esc(sec)}</strong></td>
+                    <td style="color:var(--brand-green); font-weight:700;">${st.correct}</td>
+                    <td style="color:var(--brand-red); font-weight:700;">${st.wrong}</td>
+                    <td>${st.unattempted}</td>
+                    <td><strong>${Number(st.score).toFixed(2)} / ${st.maxScore}</strong></td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-outline" id="sum-go-analytics">📈 Open Full Analytics</button>
+            <button class="btn btn-primary" onclick="EF.closeModal()">${alreadyReviewing ? "Back to Solutions" : "🔍 Review Solutions"}</button>
+          </div>
+        `, true);
+
+        document.getElementById("sum-go-analytics").addEventListener("click", () => {
+          EF.closeModal();
+          closeExamWorkspace();
+          EF.navigate("analytics");
+        });
+      }
+
+      /* Allow Analytics / Dashboard to open any historical attempt in Solution Review */
+      EF.openAttemptReview = function (attemptId) {
+        const att = EF.state.attempts.find((a) => a.id === attemptId);
+        if (!att) return;
+        const test = EF.state.tests.find((t) => t.id === att.testId);
+        if (!test) return EF.toast("Original test was deleted; only summary metrics remain.", "warn");
+
+        const responses = {};
+        const timeSpent = {};
+        (att.results || []).forEach((r) => {
+          if (r.userAnswer !== null && r.userAnswer !== undefined) responses[r.qId] = r.userAnswer;
+          timeSpent[r.qId] = r.timeSec || 0;
+        });
+
+        const qMap = new Map(test.questions.map((q) => [String(q.id), q]));
+        const qs = (att.results || []).map((r) => qMap.get(String(r.qId))).filter(Boolean);
+        if (!qs.length) return EF.toast("No questions available to review.", "warn");
+
+        exam = {
+          sessionId: att.id,
+          testId: test.id,
+          testTitle: test.title,
+          examTrack: test.exam,
+          subject: test.subject,
+          mode: att.mode || "full",
+          markingRules: test.markingRules || {},
+          questions: qs,
+          sections: Array.from(new Set(qs.map((q) => q.section || "General"))),
+          currentIdx: 0,
+          responses,
+          marked: {},
+          visited: {},
+          eliminated: {},
+          timeSpent,
+          reviewMode: true,
+          attemptData: att
+        };
+        openExamWorkspace();
+      };
+
+      /* Crash-Safe Session Recovery Check on App Boot */
+      EF.checkCrashRecovery = function () {
+        try {
+          const raw = localStorage.getItem(CRASH_STORAGE_KEY);
+          if (!raw) return;
+          const saved = JSON.parse(raw);
+          if (!saved || !saved.questions || !saved.deadlineTs) return clearCrashState();
+
+          const remSec = Math.max(0, Math.ceil((saved.deadlineTs - Date.now()) / 1000));
+          const remMin = Math.floor(remSec / 60);
+          const remS = remSec % 60;
+
+          EF.openModal(`
+            <div class="modal-head">
+              <h3>⚡ Unfinished Exam Session Detected</h3>
+            </div>
+            <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.6; margin-bottom:16px;">
+              Your session for <strong>${EF.esc(saved.testTitle)}</strong> was interrupted.
+              Your exact answers and deadline timer are preserved (${remSec > 0 ? `<strong>${remMin}m ${remS}s remaining</strong>` : `<strong>Time expired — ready to submit</strong>`}).
+            </p>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+              <button class="btn btn-danger-soft" id="crash-discard">Discard Session</button>
+              <button class="btn btn-primary" id="crash-resume">▶ Resume Exactly Where I Left Off</button>
+            </div>
+          `);
+
+          document.getElementById("crash-discard").addEventListener("click", () => {
+            clearCrashState();
+            EF.closeModal();
+          });
+          document.getElementById("crash-resume").addEventListener("click", () => {
+            EF.closeModal();
+            exam = saved;
+            openExamWorkspace();
+          });
+        } catch {
+          clearCrashState();
+        }
+      };
+    })();
+
     // ==================== [PASTE PART 4 HERE] ====================
 
     EF.init();
