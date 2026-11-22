@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExamForge — Engineering Exam Simulator</title>
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Core Client-Side Libraries (Zero Backend) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+
+  <!-- MathJax 3 for Crisp LaTeX Formulas -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      svg: { fontCache: 'global' },
+      startup: { typeset: false }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <style>
+    /* =====================================================================
+       EXAMFORGE DESIGN SYSTEM — LOW-STRAIN LIGHT THEME + DARK MODE
+       ===================================================================== */
+    :root {
+      --bg-app: #EEF3FA;
+      --bg-surface: #FFFFFF;
+      --bg-subtle: #F4F7FC;
+      --bg-input: #F8FAFD;
+      --border-color: #DCE5F2;
+      --border-strong: #C4D2E7;
+
+      --text-primary: #14223B;
+      --text-secondary: #4E607D;
+      --text-muted: #7C8EA9;
+
+      --sidebar-bg-1: #0F1D3A;
+      --sidebar-bg-2: #162B54;
+      --sidebar-text: #D7E3F8;
+      --sidebar-muted: #8EA4C8;
+      --sidebar-active: rgba(255, 255, 255, 0.14);
+
+      --brand-navy: #1A3A73;
+      --brand-blue: #2563EB;
+      --brand-blue-soft: #E8F0FE;
+      --brand-gold: #D98A1B;
+      --brand-gold-soft: #FEF4E2;
+      --brand-green: #168A5C;
+      --brand-green-soft: #E4F7EE;
+      --brand-purple: #6D4AFF;
+      --brand-purple-soft: #F0ECFF;
+      --brand-red: #D63C4B;
+      --brand-red-soft: #FDECEE;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 18px;
+      --shadow-sm: 0 2px 8px rgba(15, 29, 58, 0.05);
+      --shadow-md: 0 8px 24px rgba(15, 29, 58, 0.08);
+      --shadow-lg: 0 18px 44px rgba(15, 29, 58, 0.14);
+
+      --sidebar-w: 248px;
+      --sidebar-collapsed-w: 74px;
+      --topbar-h: 64px;
+      --transition: 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg-app: #0B1220;
+      --bg-surface: #121C2E;
+      --bg-subtle: #18253B;
+      --bg-input: #0F1828;
+      --border-color: #243552;
+      --border-strong: #32486E;
+      --text-primary: #EAF1FC;
+      --text-secondary: #A9BCDA;
+      --text-muted: #7288AB;
+      --brand-blue-soft: rgba(37, 99, 235, 0.18);
+      --brand-gold-soft: rgba(217, 138, 27, 0.18);
+      --brand-green-soft: rgba(22, 138, 92, 0.18);
+      --brand-purple-soft: rgba(109, 74, 255, 0.18);
+      --brand-red-soft: rgba(214, 60, 75, 0.18);
+      --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.28);
+      --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-app); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+    a { color: var(--brand-blue); text-decoration: none; }
+    button, input, select, textarea { font-family: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    .serif { font-family: 'Merriweather', Georgia, serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .hidden { display: none !important; }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+
+    /* =====================================================================
+       AUTH SCREEN (SUBTLE SUNRISE + FAITH-INSPIRED WELCOME)
+       ===================================================================== */
+    #auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 78% 18%, rgba(251, 191, 96, 0.35), transparent 44%),
+        radial-gradient(circle at 20% 85%, rgba(37, 99, 235, 0.16), transparent 48%),
+        linear-gradient(155deg, #0E1C38 0%, #173060 52%, #294D8A 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 920px;
+      background: #FFFFFF;
+      color: #14223B;
+      border-radius: 22px;
+      box-shadow: 0 28px 64px rgba(6, 14, 30, 0.38);
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      overflow: hidden;
+      z-index: 2;
+    }
+    .auth-hero {
+      position: relative;
+      padding: 40px 36px;
+      background: linear-gradient(165deg, #102142 0%, #1F3E77 56%, #E5A65E 125%);
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 500px;
+      overflow: hidden;
+    }
+    .auth-hero-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.92;
+    }
+    .auth-hero-content { position: relative; z-index: 2; }
+    .auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .auth-brand h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+    .auth-tagline { font-size: 14px; line-height: 1.65; color: rgba(255, 255, 255, 0.88); max-width: 320px; }
+    .auth-verse-box {
+      position: relative;
+      z-index: 2;
+      background: rgba(15, 29, 58, 0.45);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .auth-verse-box p { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 13.5px; line-height: 1.6; color: #FFF8EC; }
+    .auth-verse-box span { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; color: #FCD596; }
+
+    .auth-form-pane { padding: 38px 36px; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+    .auth-form-pane h2 { font-size: 23px; font-weight: 800; color: #14223B; }
+    .auth-form-pane .sub { font-size: 13.5px; color: #5B6E8C; margin-top: -10px; }
+    .btn-google {
+      width: 100%;
+      padding: 11px 16px;
+      border-radius: 10px;
+      border: 1.5px solid #D4DFEE;
+      background: #FFFFFF;
+      color: #14223B;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition);
+    }
+    .btn-google:hover { background: #F5F8FD; border-color: #2563EB; }
+    .auth-divider { display: flex; align-items: center; gap: 12px; color: #8A9BB5; font-size: 12px; }
+    .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: #E3EAF4; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+    .auth-form-pane .field label { color: #445570; }
+    .input, .select, .textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-color);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 13.5px;
+      transition: var(--transition);
+      outline: none;
+    }
+    .auth-form-pane .input { background: #F7F9FD; border-color: #D7E1F0; color: #14223B; }
+    .input:focus, .select:focus, .textarea:focus { border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14); }
+    .auth-tabs { display: flex; gap: 8px; background: #F0F4FA; padding: 4px; border-radius: 10px; }
+    .auth-tab { flex: 1; padding: 7px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #526480; transition: var(--transition); }
+    .auth-tab.active { background: #FFFFFF; color: #1A3A73; box-shadow: 0 2px 6px rgba(15, 29, 58, 0.08); }
+    .auth-error { font-size: 12.5px; color: #C62839; background: #FDECEE; border-radius: 8px; padding: 9px 12px; display: none; }
+    .auth-error.show { display: block; }
+
+    /* =====================================================================
+       BUTTONS & BADGES
+       ===================================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 15px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 600;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--brand-blue); color: #FFFFFF; }
+    .btn-primary:hover { background: #1D4ED8; transform: translateY(-1px); }
+    .btn-navy { background: var(--brand-navy); color: #FFFFFF; }
+    .btn-navy:hover { background: #122952; }
+    .btn-soft { background: var(--brand-blue-soft); color: var(--brand-blue); }
+    .btn-soft:hover { filter: brightness(0.96); }
+    .btn-outline { background: var(--bg-surface); border: 1.5px solid var(--border-color); color: var(--text-primary); }
+    .btn-outline:hover { border-color: var(--brand-blue); color: var(--brand-blue); }
+    .btn-success { background: var(--brand-green); color: #FFFFFF; }
+    .btn-success:hover { background: #11714B; }
+    .btn-danger { background: var(--brand-red); color: #FFFFFF; }
+    .btn-danger-soft { background: var(--brand-red-soft); color: var(--brand-red); }
+    .btn-sm { padding: 6px 11px; font-size: 12.5px; border-radius: 8px; }
+    .btn-xs { padding: 4px 8px; font-size: 11.5px; border-radius: 7px; }
+    .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 9px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 99px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+    .badge-blue { background: var(--brand-blue-soft); color: var(--brand-blue); }
+    .badge-green { background: var(--brand-green-soft); color: var(--brand-green); }
+    .badge-gold { background: var(--brand-gold-soft); color: var(--brand-gold); }
+    .badge-purple { background: var(--brand-purple-soft); color: var(--brand-purple); }
+    .badge-red { background: var(--brand-red-soft); color: var(--brand-red); }
+    .badge-neutral { background: var(--bg-subtle); color: var(--text-secondary); border: 1px solid var(--border-color); }
+
+    /* =====================================================================
+       APP SHELL: COLLAPSIBLE NAVY SIDEBAR + TOPBAR + MAIN
+       ===================================================================== */
+    #app-shell { display: flex; min-height: 100vh; width: 100%; }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: linear-gradient(180deg, var(--sidebar-bg-1) 0%, var(--sidebar-bg-2) 100%);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      transition: width var(--transition), transform var(--transition);
+      z-index: 40;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .sidebar.collapsed { width: var(--sidebar-collapsed-w); }
+    .sidebar-header {
+      padding: 20px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+    }
+    .sidebar-collapse-btn {
+      position: absolute;
+      top: 12px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      color: var(--sidebar-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .sidebar-collapse-btn:hover { background: rgba(255, 255, 255, 0.1); color: #FFFFFF; }
+    .sidebar.collapsed .sidebar-collapse-btn { position: static; margin-top: 8px; }
+    .brand-logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .brand-title { font-family: 'Merriweather', Georgia, serif; font-size: 20px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.01em; }
+    .brand-sub { font-size: 10.5px; letter-spacing: 0.04em; color: #9DB7E0; }
+    .sidebar.collapsed .brand-title,
+    .sidebar.collapsed .brand-sub,
+    .sidebar.collapsed .nav-label,
+    .sidebar.collapsed .sidebar-verse,
+    .sidebar.collapsed .sidebar-version { display: none; }
+
+    .sidebar-nav { padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 13px;
+      border-radius: 10px;
+      color: var(--sidebar-text);
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: var(--transition);
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 11px; }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.86; }
+    .nav-item:hover { background: rgba(255, 255, 255, 0.08); color: #FFFFFF; }
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(66, 133, 244, 0.42), rgba(66, 133, 244, 0.16));
+      color: #FFFFFF;
+      font-weight: 600;
+      box-shadow: inset 3px 0 0 #60A5FA;
+    }
+    .nav-divider { height: 1px; background: rgba(255, 255, 255, 0.08); margin: 8px 10px; }
+
+    .sidebar-footer { padding: 14px 16px 18px; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center; }
+    .sidebar-verse { margin-bottom: 14px; }
+    .sidebar-verse-leaf { color: #7CC69E; margin-bottom: 6px; display: inline-block; }
+    .sidebar-verse p { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 11.5px; line-height: 1.55; color: #DCE7FA; }
+    .sidebar-verse span { display: block; margin-top: 5px; font-size: 11px; font-weight: 600; color: #F5C57B; }
+
+    .theme-switch-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px; }
+    .theme-pill {
+      width: 44px;
+      height: 23px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.22);
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .theme-pill::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      transition: var(--transition);
+    }
+    [data-theme="dark"] .theme-pill { background: #3B82F6; }
+    [data-theme="dark"] .theme-pill::after { transform: translateX(21px); }
+    .sidebar-version { font-size: 11px; color: var(--sidebar-muted); }
+
+    /* Main Column */
+    .main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+    /* Topbar */
+    .topbar {
+      height: var(--topbar-h);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; flex: 1; max-width: 500px; }
+    .mobile-menu-btn { display: none; width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border-color); align-items: center; justify-content: center; }
+    .search-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: 99px;
+      padding: 8px 15px;
+      transition: var(--transition);
+    }
+    .search-box:focus-within { border-color: var(--brand-blue); background: var(--bg-surface); }
+    .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 13.5px; color: var(--text-primary); }
+    .search-kbd { font-size: 11px; color: var(--text-muted); background: var(--bg-surface); border: 1px solid var(--border-color); padding: 2px 6px; border-radius: 5px; white-space: nowrap; }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 12px;
+      border-radius: 99px;
+      background: var(--brand-green-soft);
+      color: var(--brand-green);
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+    .sync-pill.syncing { background: var(--brand-gold-soft); color: var(--brand-gold); }
+    .sync-pill.offline { background: var(--bg-subtle); color: var(--text-secondary); }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 4px 10px 4px 5px;
+      border-radius: 99px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      cursor: pointer;
+      position: relative;
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--brand-navy);
+      color: #FFFFFF;
+      font-size: 12.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user-name { font-size: 13px; font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 225px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: var(--shadow-lg);
+      padding: 8px;
+      z-index: 60;
+    }
+    .user-dropdown-info { padding: 8px 10px 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 6px; }
+    .user-dropdown-info strong { display: block; font-size: 13px; }
+    .user-dropdown-info small { font-size: 11.5px; color: var(--text-muted); word-break: break-all; }
+    .dropdown-btn {
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dropdown-btn:hover { background: var(--bg-subtle); }
+    .dropdown-btn.danger { color: var(--brand-red); }
+
+    /* Main Content Area */
+    .content-wrap { padding: 22px 24px 36px; max-width: 1440px; width: 100%; margin: 0 auto; }
+    .view-section { display: none; animation: fadeIn 0.2s ease; }
+    .view-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* =====================================================================
+       SHARED CARDS, GRIDS, HERO BANNER & WIDGETS
+       ===================================================================== */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: 18px 20px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
+
+    /* Dashboard Sunrise & Cross Hero Banner */
+    .hero-banner {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      padding: 28px 32px;
+      margin-bottom: 18px;
+      min-height: 168px;
+      display: grid;
+      grid-template-columns: 1.35fr 0.65fr 1fr;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(110deg, #EBF2FC 0%, #F4ECDF 48%, #FBE0AF 72%, #DCE6F7 100%);
+      border: 1px solid #D5E2F5;
+      box-shadow: var(--shadow-sm);
+      color: #14223B;
+    }
+    [data-theme="dark"] .hero-banner {
+      background: linear-gradient(110deg, #152544 0%, #24365A 52%, #473A2C 78%, #18294A 100%);
+      border-color: #2B3F66;
+      color: #F2F6FC;
+    }
+    .hero-bg-art { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .hero-left, .hero-right { position: relative; z-index: 2; }
+    .hero-title { font-family: 'Merriweather', Georgia, serif; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+    .hero-title span { color: #2563EB; }
+    [data-theme="dark"] .hero-title span { color: #60A5FA; }
+    .hero-subtitle { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 16px; margin-top: 6px; color: #1E3762; }
+    [data-theme="dark"] .hero-subtitle { color: #D5E3FA; }
+    .hero-tagline { font-size: 13px; margin-top: 8px; color: #43577A; font-weight: 500; }
+    [data-theme="dark"] .hero-tagline { color: #B4C6E3; }
+    .hero-right { text-align: right; }
+    .hero-verse { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 15.5px; line-height: 1.55; color: #172744; font-weight: 700; }
+    [data-theme="dark"] .hero-verse { color: #FFF5E4; }
+    .hero-verse-ref { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: #3D5275; }
+    [data-theme="dark"] .hero-verse-ref { color: #F8C97F; }
+
+    /* KPI Strip (5 Cards) */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 18px; }
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 15px 16px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    .kpi-card.clickable { cursor: pointer; }
+    .kpi-card.clickable:hover { transform: translateY(-2px); border-color: var(--brand-blue); }
+    .kpi-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+    .kpi-val { font-size: 21px; font-weight: 800; line-height: 1.15; }
+    .kpi-lbl { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .kpi-delta { font-size: 11px; font-weight: 700; color: var(--brand-green); margin-left: 5px; }
+
+    /* Dashboard Grids */
+    .dash-mid-grid { display: grid; grid-template-columns: 1.55fr 1.05fr 0.85fr; gap: 16px; margin-bottom: 16px; }
+    .dash-bot-grid { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 16px; }
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    .quick-tile {
+      border-radius: 13px;
+      padding: 16px 14px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 102px;
+      transition: var(--transition);
+      border: 1px solid transparent;
+    }
+    .quick-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .quick-tile.qt-primary { background: linear-gradient(135deg, #1E448A, #2563EB); color: #FFFFFF; }
+    .quick-tile.qt-blue { background: var(--brand-blue-soft); color: var(--brand-navy); border-color: rgba(37, 99, 235, 0.18); }
+    .quick-tile.qt-green { background: var(--brand-green-soft); color: #115E40; border-color: rgba(22, 138, 92, 0.18); }
+    .quick-tile.qt-purple { background: var(--brand-purple-soft); color: #4A2FB8; border-color: rgba(109, 74, 255, 0.18); }
+    [data-theme="dark"] .quick-tile.qt-blue { color: #BFDBFE; }
+    [data-theme="dark"] .quick-tile.qt-green { color: #A7F3D0; }
+    [data-theme="dark"] .quick-tile.qt-purple { color: #DDD6FE; }
+    .quick-tile h4 { font-size: 13.5px; font-weight: 700; margin-top: 8px; }
+    .quick-tile p { font-size: 11.5px; opacity: 0.85; margin-top: 2px; }
+
+    /* Verse of the Day Card */
+    .votd-card {
+      background: linear-gradient(145deg, #132549 0%, #1F3E77 56%, #8C6239 125%);
+      color: #FFFFFF;
+      border-radius: var(--radius-md);
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: none;
+    }
+    .votd-label { font-size: 10.5px; letter-spacing: 0.12em; font-weight: 700; color: #FCD596; text-transform: uppercase; }
+    .votd-quote { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.5px; line-height: 1.6; margin: 10px 0 6px; color: #FFF9EF; }
+    .votd-ref { font-size: 12px; font-weight: 700; color: #FCD596; }
+    .votd-note { font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 10px; line-height: 1.5; border-top: 1px solid rgba(255, 255, 255, 0.16); padding-top: 10px; }
+
+    /* Activity List */
+    .activity-list { display: flex; flex-direction: column; gap: 10px; max-height: 235px; overflow-y: auto; }
+    .activity-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; padding-bottom: 9px; border-bottom: 1px solid var(--border-color); }
+    .activity-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .activity-dot { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; }
+
+    /* Page Header Banners (Analytics / Revision / Library / Importer) */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .page-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .page-header p { font-size: 13.5px; color: var(--text-secondary); margin-top: 3px; }
+    .subtle-verse-banner {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--brand-gold);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .subtle-verse-banner em { font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; color: var(--text-primary); }
+    .subtle-verse-banner span { font-size: 12px; font-weight: 700; color: var(--brand-gold); white-space: nowrap; }
+
+    /* Importer & Prompt Studio */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .prompt-box {
+      background: #0F172A;
+      color: #E2E8F0;
+      border-radius: 11px;
+      padding: 13px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.8px;
+      line-height: 1.55;
+      max-height: 230px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      border: 1px solid #243552;
+    }
+    .dropzone {
+      border: 2px dashed var(--border-strong);
+      border-radius: 12px;
+      padding: 18px 16px;
+      text-align: center;
+      background: var(--bg-subtle);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .dropzone:hover, .dropzone.dragover { border-color: var(--brand-blue); background: var(--brand-blue-soft); }
+
+    /* Data Tables */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { background: var(--bg-subtle); font-weight: 700; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Test Cards Grid */
+    .tests-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; }
+    .test-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    .test-card:hover { border-color: var(--brand-blue); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+    /* =====================================================================
+       DISTRACTION-FREE EXAM WORKSPACE (100% STRICT LIGHT, ZERO BIBLICAL UI)
+       ===================================================================== */
+    #exam-workspace {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #F4F7FB;
+      color: #132038;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #exam-workspace.active { display: flex; }
+    .exam-topbar {
+      height: 58px;
+      background: #FFFFFF;
+      border-bottom: 1px solid #D7E2F0;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .exam-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 9px;
+      background: #EEF4FF;
+      color: #1B418B;
+      border: 1px solid #C9DCFA;
+    }
+    .exam-timer.urgent { background: #FDECEE; color: #C62839; border-color: #F5BAC1; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+    .exam-section-bar {
+      background: #FFFFFF;
+      border-bottom: 1px solid #DCE5F2;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .sec-pill {
+      padding: 6px 13px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #465B7A;
+      background: #F1F5FB;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .sec-pill.active { background: #1D4ED8; color: #FFFFFF; }
+
+    .exam-body { flex: 1; display: grid; grid-template-columns: 1fr 295px; overflow: hidden; }
+    .exam-main { overflow-y: auto; padding: 22px 28px; display: flex; flex-direction: column; gap: 16px; }
+    .exam-q-card {
+      background: #FFFFFF;
+      border: 1px solid #DCE5F2;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 2px 8px rgba(15, 29, 58, 0.04);
+    }
+    .exam-passage-box {
+      background: #F7FAFF;
+      border: 1px solid #D3E1F5;
+      border-left: 4px solid #2563EB;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .exam-q-text { font-size: 15.5px; line-height: 1.7; color: #132038; }
+    .exam-img {
+      display: block;
+      max-width: 100%;
+      max-height: 360px;
+      margin: 12px 0;
+      border-radius: 8px;
+      border: 1px solid #DCE5F2;
+      background: #FFFFFF;
+      object-fit: contain;
+    }
+    .exam-options { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+    .exam-opt {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 15px;
+      border-radius: 11px;
+      border: 1.5px solid #D8E2F0;
+      background: #FAFBFD;
+      cursor: pointer;
+      transition: 0.16s ease;
+      user-select: none;
+    }
+    .exam-opt:hover { border-color: #60A5FA; background: #F1F6FF; }
+    .exam-opt.selected { border-color: #2563EB; background: #EBF2FF; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14); }
+    .exam-opt.eliminated { opacity: 0.48; text-decoration: line-through; background: #F1F4F8; }
+    .exam-opt.eliminated img { filter: grayscale(1); opacity: 0.45; }
+    .exam-opt.review-correct { border-color: #168A5C; background: #E6F7EF; }
+    .exam-opt.review-wrong { border-color: #D63C4B; background: #FDECEE; }
+    .exam-opt-key {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: #E8EFFA;
+      color: #1D3B72;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .exam-opt.selected .exam-opt-key { background: #2563EB; color: #FFFFFF; }
+    .exam-opt-content { flex: 1; font-size: 14.5px; line-height: 1.55; }
+    .exam-opt-content img { max-height: 140px; max-width: 100%; border-radius: 6px; border: 1px solid #DCE5F2; background: #FFFFFF; display: block; }
+
+    .exam-nat-wrap { margin-top: 18px; max-width: 340px; }
+    .exam-nat-input {
+      width: 100%;
+      padding: 12px 15px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 2px solid #C5D5EC;
+      background: #FFFFFF;
+      color: #132038;
+      outline: none;
+    }
+    .exam-nat-input:focus { border-color: #2563EB; }
+
+    .exam-palette-pane {
+      background: #FFFFFF;
+      border-left: 1px solid #D7E2F0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .palette-legend {
+      padding: 12px 14px;
+      border-bottom: 1px solid #E5ECF6;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      font-size: 11.5px;
+      color: #465B7A;
+    }
+    .legend-dot { width: 12px; height: 12px; border-radius: 4px; display: inline-block; margin-right: 5px; vertical-align: middle; }
+    .palette-grid {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      overflow-y: auto;
+      flex: 1;
+      align-content: start;
+    }
+    .pal-btn {
+      height: 38px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1.5px solid #D5DFEE;
+      background: #F6F8FC;
+      color: #364B6B;
+      position: relative;
+    }
+    .pal-btn.current { box-shadow: 0 0 0 2.5px #2563EB; border-color: #2563EB; }
+    .pal-btn.st-answered { background: #168A5C; color: #FFFFFF; border-color: #168A5C; }
+    .pal-btn.st-not-answered { background: #E3535F; color: #FFFFFF; border-color: #E3535F; }
+    .pal-btn.st-marked { background: #6D4AFF; color: #FFFFFF; border-color: #6D4AFF; }
+    .pal-btn.st-ans-marked { background: #6D4AFF; color: #FFFFFF; border-color: #168A5C; box-shadow: inset 0 -4px 0 #34D399; }
+    .pal-btn .bm-dot { position: absolute; top: 2px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: #F59E0B; }
+
+    .exam-footer {
+      height: 60px;
+      background: #FFFFFF;
+      border-top: 1px solid #D7E2F0;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    /* =====================================================================
+       MODALS & TOASTS
+       ===================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 20, 38, 0.56);
+      backdrop-filter: blur(4px);
+      z-index: 120;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      animation: fadeIn 0.16s ease;
+    }
+    .modal-box {
+      width: 100%;
+      max-width: 620px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      box-shadow: var(--shadow-lg);
+      padding: 24px 26px;
+    }
+    .modal-box.wide { max-width: 820px; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .modal-head h3 { font-size: 18px; font-weight: 800; }
+
+    #toast-root {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 360px;
+    }
+    .toast {
+      background: #14223B;
+      color: #FFFFFF;
+      padding: 11px 16px;
+      border-radius: 11px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border-left: 4px solid #3B82F6;
+      animation: fadeIn 0.18s ease;
+    }
+    .toast.success { border-left-color: #22C55E; }
+    .toast.warn { border-left-color: #F59E0B; }
+    .toast.error { border-left-color: #EF4444; }
+
+    /* =====================================================================
+       RESPONSIVE BREAKPOINTS
+       ===================================================================== */
+    @media (max-width: 1180px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .dash-mid-grid, .dash-bot-grid { grid-template-columns: 1fr 1fr; }
+      .hero-banner { grid-template-columns: 1fr; text-align: left; }
+      .hero-right { text-align: left; }
+    }
+    @media (max-width: 900px) {
+      .auth-card { grid-template-columns: 1fr; }
+      .auth-hero { min-height: 240px; padding: 26px; }
+      .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); }
+      .sidebar.mobile-open { transform: translateX(0); }
+      .mobile-menu-btn { display: inline-flex; }
+      .grid-2, .dash-mid-grid, .dash-bot-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .exam-body { grid-template-columns: 1fr; }
+      .exam-palette-pane { display: none; }
+      .exam-palette-pane.mobile-show { display: flex; position: fixed; right: 0; top: 58px; bottom: 60px; width: 285px; z-index: 110; box-shadow: var(--shadow-lg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================================================================
+       1. AUTHENTICATION SCREEN
+       =================================================================== -->
+  <div id="auth-screen">
+    <div class="auth-card">
+      <div class="auth-hero">
+        <!-- Subtle Sunrise & Cross Artwork -->
+        <svg class="auth-hero-svg" viewBox="0 0 460 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <radialGradient id="authSun" cx="76%" cy="56%" r="52%">
+              <stop offset="0%" stop-color="#FFE6A7" stop-opacity="0.95" />
+              <stop offset="45%" stop-color="#F6B76A" stop-opacity="0.45" />
+              <stop offset="100%" stop-color="#1A3A73" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="460" height="520" fill="url(#authSun)" />
+          <path d="M0 390 Q120 330 260 365 T460 350 L460 520 L0 520 Z" fill="#0E1C38" opacity="0.58" />
+          <path d="M0 430 Q170 385 320 420 T460 398 L460 520 L0 520 Z" fill="#0B162C" opacity="0.82" />
+          <!-- Minimal Cross Silhouette on Ridge -->
+          <g fill="#2C1D13" opacity="0.82" transform="translate(345, 250)">
+            <rect x="-4" y="0" width="8" height="92" rx="2" />
+            <rect x="-26" y="20" width="52" height="7" rx="2" />
+          </g>
+        </svg>
+
+        <div class="auth-hero-content">
+          <div class="auth-brand">
+            <svg width="42" height="42" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+              <rect x="22" y="5" width="4" height="22" rx="1.5" fill="#FCD596" />
+              <rect x="14" y="11" width="20" height="4" rx="1.5" fill="#FCD596" />
+              <path d="M8 34C14 31 19 31 24 35C29 31 34 31 40 34V24C34 21 29 21 24 25C19 21 14 21 8 24V34Z" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round" />
+              <path d="M10 38C15 35.5 20 36 24 39C28 36 33 35.5 38 38" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <div>
+              <h1>ExamForge</h1>
+              <div style="font-size:11.5px; color:#FCD596; letter-spacing:0.06em;">ENGINEERING MOCK SIMULATOR</div>
+            </div>
+          </div>
+          <p class="auth-tagline">
+            Prepare with purpose. Perform with faith. Excel with excellence.
+          </p>
+          <p style="font-size:12.5px; color:rgba(255,255,255,0.74); margin-top:12px; max-width:320px; line-height:1.6;">
+            Zero-cost, cloud-synced exam simulation for GATE, UPSC ESE, and technical exams — built for focus, accuracy, and peace of mind.
+          </p>
+        </div>
+
+        <div class="auth-verse-box">
+          <p>“Commit to the Lord whatever you do, and He will establish your plans.”</p>
+          <span>— Proverbs 16:3</span>
+        </div>
+      </div>
+
+      <div class="auth-form-pane">
+        <h2>Welcome back</h2>
+        <p class="sub">Sign in to sync your tests, attempts, analytics & Google Drive vault.</p>
+
+        <button class="btn-google" id="btn-google-signin" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.71 2.88c2.17-2 3.71-4.95 3.71-8.7z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09L2.18 7.07C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.71-2.88c-.98.66-2.23 1.06-3.57 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          </svg>
+          Continue with Google (Sync + Drive)
+        </button>
+
+        <div class="auth-divider">or use email</div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-auth-mode="login" type="button">Sign In</button>
+          <button class="auth-tab" data-auth-mode="signup" type="button">Create Account</button>
+        </div>
+
+        <form id="auth-email-form" style="display:flex; flex-direction:column; gap:12px;">
+          <div class="field hidden" id="auth-name-wrap">
+            <label for="auth-name">Full Name</label>
+            <input id="auth-name" class="input" type="text" placeholder="e.g. Srujan" />
+          </div>
+          <div class="field">
+            <label for="auth-email">Email</label>
+            <input id="auth-email" class="input" type="email" required placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label for="auth-password">Password</label>
+            <input id="auth-password" class="input" type="password" required minlength="6" placeholder="Minimum 6 characters" />
+          </div>
+          <div id="auth-error" class="auth-error"></div>
+          <button class="btn btn-primary" id="auth-submit-btn" type="submit" style="width:100%; padding:11px;">Sign In</button>
+        </form>
+
+        <button class="btn btn-outline" id="btn-guest-mode" type="button" style="width:100%;">
+          Continue in Offline / Guest Mode
+        </button>
+        <p style="font-size:11.5px; color:#7A8CA8; text-align:center;">
+          Guest Mode saves tests & WebP diagrams locally on this browser. Sign in anytime to cloud-sync.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       2. MAIN APPLICATION SHELL
+       =================================================================== -->
+  <div id="app-shell" class="hidden">
+    <!-- Collapsible Navy Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="sidebar-collapse-btn" id="btn-collapse-sidebar" title="Collapse sidebar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="brand-logo-wrap">
+          <!-- Minimal Bible + Cross Logo -->
+          <svg width="44" height="44" viewBox="0 0 48 48" fill="none" aria-label="ExamForge Logo">
+            <rect x="22" y="4" width="4" height="21" rx="1.4" fill="#FFFFFF" />
+            <rect x="14.5" y="10" width="19" height="3.8" rx="1.4" fill="#FFFFFF" />
+            <path d="M7 35C13 31.8 18.8 32 24 36C29.2 32 35 31.8 41 35V24.5C35 21.5 29.2 21.8 24 25.6C18.8 21.8 13 21.5 7 24.5V35Z" stroke="#E2ECFF" stroke-width="2.3" stroke-linejoin="round" fill="rgba(255,255,255,0.08)" />
+            <path d="M9.5 39C14.8 36.6 19.6 37 24 40C28.4 37 33.2 36.6 38.5 39" stroke="#7FB1FF" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <div class="brand-title">ExamForge</div>
+          <div class="brand-sub">Prepare · Perform · Excel</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <button class="nav-item active" data-view="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"/></svg>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="library">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          <span class="nav-label">Test Library</span>
+        </button>
+        <button class="nav-item" data-view="importer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.4 5.2L20 10l-5.6 1.8L12 17l-2.4-5.2L4 10l5.6-1.8L12 3z"/><path d="M5 19h14"/></svg>
+          <span class="nav-label">AI Prompt & Import</span>
+        </button>
+        <button class="nav-item" data-view="diagrams">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15l-5-5-6 6-2-2-5 5"/></svg>
+          <span class="nav-label">Diagram Manager</span>
+        </button>
+        <button class="nav-item" data-view="analytics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+          <span class="nav-label">Analytics</span>
+        </button>
+        <button class="nav-item" data-view="revision">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
+          <span class="nav-label">Bookmarks & Revision</span>
+        </button>
+
+        <div class="nav-divider"></div>
+
+        <button class="nav-item" data-view="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="nav-label">Settings</span>
+        </button>
+        <button class="nav-item" data-view="about">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span class="nav-label">About</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-verse">
+          <div class="sidebar-verse-leaf">✦</div>
+          <p>“Commit to the Lord whatever you do, and He will establish your plans.”</p>
+          <span>Proverbs 16:3</span>
+        </div>
+        <div class="theme-switch-row">
+          <span title="Light Theme" style="font-size:13px;">☀️</span>
+          <div class="theme-pill" id="btn-theme-toggle" role="switch" aria-label="Toggle dark mode"></div>
+          <span title="Dark Theme" style="font-size:13px;">🌙</span>
+        </div>
+        <div class="sidebar-version">v1.0.0</div>
+      </div>
+    </aside>
+
+    <!-- Main Column -->
+    <div class="main-col">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" id="btn-mobile-menu" aria-label="Toggle navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input id="global-search" type="text" placeholder="Search tests, subjects or topics..." />
+            <span class="search-kbd">Ctrl + K</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-pill" id="sync-status-pill" title="Cloud Sync Status">
+            <span class="sync-dot"></span>
+            <span id="sync-status-text">Synced</span>
+          </div>
+
+          <button class="btn btn-outline btn-sm" id="btn-drive-status" title="Google Drive Connection">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 19h20L12 2z"/></svg>
+            <span id="drive-status-label">Drive</span>
+          </button>
+
+          <div class="user-chip" id="user-chip">
+            <div class="user-avatar" id="user-avatar">EF</div>
+            <span class="user-name" id="user-name">User</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+
+            <div class="user-dropdown hidden" id="user-dropdown">
+              <div class="user-dropdown-info">
+                <strong id="dd-user-name">User</strong>
+                <small id="dd-user-email">Offline Guest</small>
+              </div>
+              <button class="dropdown-btn" id="dd-sync-now" type="button">🔄 Force Cloud Sync</button>
+              <button class="dropdown-btn" id="dd-connect-drive" type="button">☁️ Connect Google Drive</button>
+              <button class="dropdown-btn" id="dd-settings" type="button">⚙️ Settings & Cache</button>
+              <button class="dropdown-btn danger" id="dd-logout" type="button">🚪 Sign Out</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic Views Container -->
+      <main class="content-wrap">
+        <section id="view-dashboard" class="view-section active"></section>
+        <section id="view-library" class="view-section"></section>
+        <section id="view-importer" class="view-section"></section>
+        <section id="view-diagrams" class="view-section"></section>
+        <section id="view-analytics" class="view-section"></section>
+        <section id="view-revision" class="view-section"></section>
+        <section id="view-settings" class="view-section"></section>
+        <section id="view-about" class="view-section"></section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       3. DISTRACTION-FREE EXAM WORKSPACE (ZERO BIBLICAL ELEMENTS)
+       =================================================================== -->
+  <div id="exam-workspace" aria-label="Exam Mode"></div>
+
+  <!-- Modals & Toasts -->
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+
+  <!-- ===================================================================
+       4. APPLICATION CORE SCRIPT (FIREBASE + DRIVE + INDEXEDDB + PDF CROP)
+       =================================================================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider,
+      signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc, collection, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    /* -----------------------------------------------------------------
+       FIREBASE INITIALIZATION (User Credentials)
+       ----------------------------------------------------------------- */
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnBO3G5xZtk3qkArp-DWUOI7aFRngCO8o",
+      authDomain: "mock-test-4ac5d.firebaseapp.com",
+      projectId: "mock-test-4ac5d",
+      storageBucket: "mock-test-4ac5d.firebasestorage.app",
+      messagingSenderId: "704532603753",
+      appId: "1:704532603753:web:a699e6ac03b2277a7153f8",
+      measurementId: "G-VZSJPRR9KQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    let analytics = null;
+    try {
+      if (location.protocol.startsWith("http")) analytics = getAnalytics(app);
+    } catch (_) {}
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Configure PDF.js worker for client-side auto-cropping
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+    }
+
+    /* -----------------------------------------------------------------
+       LOCAL DAILY-ROTATING VERSES (WORKS 100% OFFLINE)
+       ----------------------------------------------------------------- */
+    const DAILY_VERSES = [
+      {
+        text: "Whatever you do, work at it with all your heart, as working for the Lord.",
+        ref: "Colossians 3:23",
+        note: "Prepare with dedication. Stay humble. Trust God's guidance. Keep moving forward."
+      },
+      {
+        text: "Commit to the Lord whatever you do, and He will establish your plans.",
+        ref: "Proverbs 16:3",
+        note: "Bring clarity and discipline to today's study block; leave the outcome in His hands."
+      },
+      {
+        text: "If any of you lacks wisdom, you should ask God, who gives generously to all.",
+        ref: "James 1:5",
+        note: "When a tough concept stalls you, pause, breathe, and approach it with fresh insight."
+      },
+      {
+        text: "The plans of the diligent lead surely to advantage.",
+        ref: "Proverbs 21:5",
+        note: "Small, consistent daily mock practice compounds into exam-day mastery."
+      },
+      {
+        text: "Those who hope in the Lord will renew their strength.",
+        ref: "Isaiah 40:31",
+        note: "Weak areas are not setbacks—they are the exact places where your strength grows."
+      },
+      {
+        text: "Be strong and courageous. Do not be afraid; do not be discouraged.",
+        ref: "Joshua 1:9",
+        note: "Walk into every timed mock with calm confidence and steady focus."
+      },
+      {
+        text: "Let us not become weary in doing good, for at the proper time we will reap a harvest.",
+        ref: "Galatians 6:9",
+        note: "Every solved problem and reviewed mistake is a seed planted for your goal."
+      }
+    ];
+
+    /* -----------------------------------------------------------------
+       INDEXEDDB WEBP ASSET CACHE (ZERO DATABASE BLOAT)
+       ----------------------------------------------------------------- */
+    const ImageDB = {
+      dbName: "ExamForge_Assets_v1",
+      storeName: "images",
+      _db: null,
+
+      async open() {
+        if (this._db) return this._db;
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(this.dbName, 1);
+          req.onupgradeneeded = (e) => {
+            const d = e.target.result;
+            if (!d.objectStoreNames.contains(this.storeName)) {
+              const store = d.createObjectStore(this.storeName, { keyPath: "id" });
+              store.createIndex("by_test", "testId", { unique: false });
+            }
+          };
+          req.onsuccess = () => { this._db = req.result; resolve(this._db); };
+          req.onerror = () => reject(req.error);
+        });
+      },
+
+      async compressToWebP(blobOrFile, maxWidth = 1400, quality = 0.88) {
+        if (blobOrFile.type === "image/svg+xml") return blobOrFile;
+        try {
+          const bmp = await createImageBitmap(blobOrFile);
+          let w = bmp.width, h = bmp.height;
+          if (w > maxWidth) { h = Math.round(h * (maxWidth / w)); w = maxWidth; }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(bmp, 0, 0, w, h);
+          bmp.close();
+          return await new Promise((res) =>
+            canvas.toBlob((b) => res(b || blobOrFile), "image/webp", quality)
+          );
+        } catch {
+          return blobOrFile;
+        }
+      },
+
+      async putImage(testId, key, blobOrFile) {
+        const dbConn = await this.open();
+        const webpBlob = await this.compressToWebP(blobOrFile);
+        const rec = {
+          id: `${testId}::${key}`,
+          testId,
+          key,
+          blob: webpBlob,
+          size: webpBlob.size || 0,
+          updatedAt: Date.now()
+        };
+        return new Promise((resolve, reject) => {
+          const tx = dbConn.transaction(this.storeName, "readwrite");
+          tx.objectStore(this.storeName).put(rec);
+          tx.oncomplete = () => resolve(rec);
+          tx.onerror = () => reject(tx.error);
+        });
+      },
+
+      async getImageUrl(testId, key) {
+        const dbConn = await this.open();
+        return new Promise((resolve) => {
+          const tx = dbConn.transaction(this.storeName, "readonly");
+          const req = tx.objectStore(this.storeName).get(`${testId}::${key}`);
+          req.onsuccess = () => {
+            if (req.result && req.result.blob) resolve(URL.createObjectURL(req.result.blob));
+            else resolve(null);
+          };
+          req.onerror = () => resolve(null);
+        });
+      },
+
+      async getTestImages(testId) {
+        const dbConn = await this.open();
+        return new Promise((resolve) => {
+          const tx = dbConn.transaction(this.storeName, "readonly");
+          const idx = tx.objectStore(this.storeName).index("by_test");
+          const req = idx.getAll(IDBKeyRange.only(testId));
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => resolve([]);
+        });
+      },
+
+      async getAllStats() {
+        const dbConn = await this.open();
+        return new Promise((resolve) => {
+          const tx = dbConn.transaction(this.storeName, "readonly");
+          const req = tx.objectStore(this.storeName).getAll();
+          req.onsuccess = () => {
+            const list = req.result || [];
+            const totalBytes = list.reduce((s, r) => s + (r.size || 0), 0);
+            resolve({ count: list.length, totalBytes, items: list });
+          };
+          req.onerror = () => resolve({ count: 0, totalBytes: 0, items: [] });
+        });
+      },
+
+      async deleteImage(testId, key) {
+        const dbConn = await this.open();
+        return new Promise((resolve) => {
+          const tx = dbConn.transaction(this.storeName, "readwrite");
+          tx.objectStore(this.storeName).delete(`${testId}::${key}`);
+          tx.oncomplete = () => resolve(true);
+        });
+      },
+
+      async deleteTestImages(testId) {
+        const items = await this.getTestImages(testId);
+        const dbConn = await this.open();
+        return new Promise((resolve) => {
+          const tx = dbConn.transaction(this.storeName, "readwrite");
+          const store = tx.objectStore(this.storeName);
+          items.forEach((it) => store.delete(it.id));
+          tx.oncomplete = () => resolve(true);
+        });
+      },
+
+      async clearAll() {
+        const dbConn = await this.open();
+        return new Promise((resolve) => {
+          const tx = dbConn.transaction(this.storeName, "readwrite");
+          tx.objectStore(this.storeName).clear();
+          tx.oncomplete = () => resolve(true);
+        });
+      }
+    };
+
+    /* -----------------------------------------------------------------
+       GOOGLE DRIVE CLIENT (drive.file SCOPE — PDF & COORDINATES VAULT)
+       ----------------------------------------------------------------- */
+    const DriveAPI = {
+      getToken() { return sessionStorage.getItem("ef_drive_token") || ""; },
+      setToken(tok) {
+        if (tok) sessionStorage.setItem("ef_drive_token", tok);
+        else sessionStorage.removeItem("ef_drive_token");
+        EF.updateDriveBadge();
+      },
+      isConnected() { return Boolean(this.getToken()); },
+
+      async connectInteractive() {
+        const provider = new GoogleAuthProvider();
+        provider.addScope("https://www.googleapis.com/auth/drive.file");
+        const res = await signInWithPopup(auth, provider);
+        const cred = GoogleAuthProvider.credentialFromResult(res);
+        if (cred && cred.accessToken) {
+          this.setToken(cred.accessToken);
+          EF.toast("Google Drive connected for PDF & Coordinates vault.", "success");
+          return cred.accessToken;
+        }
+        throw new Error("Drive access token not returned.");
+      },
+
+      async ensureVaultFolder() {
+        const token = this.getToken();
+        if (!token) throw new Error("Google Drive not connected.");
+        const cached = sessionStorage.getItem("ef_drive_folder");
+        if (cached) return cached;
+
+        const q = encodeURIComponent("name='ExamForge_Vault' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+        const search = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!search.ok) {
+          if (search.status === 401) this.setToken("");
+          throw new Error("Drive API unavailable or token expired. Click Connect Google Drive.");
+        }
+        const data = await search.json();
+        if (data.files && data.files.length) {
+          sessionStorage.setItem("ef_drive_folder", data.files[0].id);
+          return data.files[0].id;
+        }
+        const created = await fetch("https://www.googleapis.com/drive/v3/files", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "ExamForge_Vault", mimeType: "application/vnd.google-apps.folder" })
+        });
+        const folder = await created.json();
+        sessionStorage.setItem("ef_drive_folder", folder.id);
+        return folder.id;
+      },
+
+      async uploadFile(fileOrBlob, filename, mimeType) {
+        const token = this.getToken();
+        if (!token) throw new Error("Connect Google Drive first.");
+        const folderId = await this.ensureVaultFolder();
+        const metadata = { name: filename, parents: [folderId], mimeType };
+        const form = new FormData();
+        form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+        form.append("file", fileOrBlob);
+
+        const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: form
+        });
+        if (!res.ok) {
+          if (res.status === 401) this.setToken("");
+          const errTxt = await res.text();
+          throw new Error(`Drive upload failed (${res.status}): ${errTxt.slice(0, 140)}`);
+        }
+        return await res.json();
+      },
+
+      async downloadBlob(fileId) {
+        const token = this.getToken();
+        if (!token) throw new Error("Connect Google Drive to fetch this file directly.");
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          if (res.status === 401) this.setToken("");
+          throw new Error(`Could not download file (${res.status}). Reconnect Google Drive.`);
+        }
+        return await res.blob();
+      }
+    };
+
+    /* -----------------------------------------------------------------
+       CLIENT-SIDE PDF.JS AUTO-CROPPER (USES SAVED COORDINATES.JSON)
+       ----------------------------------------------------------------- */
+    async function autoCropPdfWithCoordinates(pdfArrayBuffer, coordsMap, testId, onProgress) {
+      if (!window.pdfjsLib) throw new Error("PDF.js library did not load.");
+      const pdf = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
+
+      // Group keys by page number to render each page once
+      const byPage = {};
+      Object.entries(coordsMap || {}).forEach(([key, info]) => {
+        const pageNum = Number(info.page || 1);
+        const bbox = info.bbox || info.box;
+        if (!Array.isArray(bbox) || bbox.length !== 4) return;
+        if (!byPage[pageNum]) byPage[pageNum] = [];
+        byPage[pageNum].push({ key, bbox });
+      });
+
+      const pageNums = Object.keys(byPage).map(Number).sort((a, b) => a - b);
+      let cropped = 0;
+      const total = Object.values(byPage).reduce((s, arr) => s + arr.length, 0);
+
+      for (const pNum of pageNums) {
+        if (pNum < 1 || pNum > pdf.numPages) continue;
+        const page = await pdf.getPage(pNum);
+        const viewport = page.getViewport({ scale: 2.2 });
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = viewport.width;
+        pageCanvas.height = viewport.height;
+        const pCtx = pageCanvas.getContext("2d");
+        await page.render({ canvasContext: pCtx, viewport }).promise;
+
+        for (const item of byPage[pNum]) {
+          // Supports normalized [x1, y1, x2, y2] in 0..1000
+          const [x1, y1, x2, y2] = item.bbox.map(Number);
+          const sx = Math.max(0, Math.floor((x1 / 1000) * viewport.width));
+          const sy = Math.max(0, Math.floor((y1 / 1000) * viewport.height));
+          const sw = Math.max(10, Math.ceil(((x2 - x1) / 1000) * viewport.width));
+          const sh = Math.max(10, Math.ceil(((y2 - y1) / 1000) * viewport.height));
+
+          const cropCanvas = document.createElement("canvas");
+          cropCanvas.width = sw;
+          cropCanvas.height = sh;
+          cropCanvas.getContext("2d").drawImage(pageCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+          const blob = await new Promise((r) => cropCanvas.toBlob(r, "image/webp", 0.9));
+          if (blob) {
+            await ImageDB.putImage(testId, item.key, blob);
+            cropped++;
+            if (onProgress) onProgress(cropped, total, item.key);
+          }
+        }
+      }
+      return { cropped, total };
+    }
+
+    /* -----------------------------------------------------------------
+       GLOBAL EXAMFORGE CONTROLLER (window.EF)
+       ----------------------------------------------------------------- */
+    const EF = {
+      auth, db, ImageDB, DriveAPI, autoCropPdfWithCoordinates, DAILY_VERSES,
+
+      state: {
+        user: null,
+        isGuest: false,
+        currentView: "dashboard",
+        searchQuery: "",
+        tests: [],
+        attempts: [],
+        bookmarks: {}, // { `${testId}::${qId}`: { testId, qId, testTitle, section, addedAt } }
+        activity: [],
+        settings: {
+          theme: localStorage.getItem("ef_theme") || "light",
+          defaultDurationMin: 180,
+          dailyGoalTests: 2,
+          showTimerInExam: true
+        }
+      },
+
+      charts: {},
+      _blobUrls: [],
+
+      /* --- Utilities --- */
+      uid(prefix = "id") {
+        return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+      },
+
+      esc(str) {
+        return String(str ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      },
+
+      fmtBytes(bytes) {
+        if (!bytes) return "0 KB";
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / 1048576).toFixed(2)} MB`;
+      },
+
+      fmtTimeAgo(ts) {
+        const diff = Math.max(1, Math.floor((Date.now() - (ts || Date.now())) / 1000));
+        if (diff < 60) return "Just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
+      },
+
+      getDailyVerse() {
+        const dayIndex = Math.floor(Date.now() / 86400000) % DAILY_VERSES.length;
+        return DAILY_VERSES[dayIndex];
+      },
+
+      extractRequiredImageKeys(test) {
+        const keys = new Set();
+        const rx = /\[IMG:([A-Za-z0-9_\-.]+)\]/g;
+        const scan = (txt) => {
+          if (typeof txt !== "string") return;
+          let m;
+          while ((m = rx.exec(txt)) !== null) keys.add(m[1]);
+        };
+        (test.questions || []).forEach((q) => {
+          scan(q.question);
+          scan(q.passage);
+          scan(q.explanation);
+          (q.options || []).forEach(scan);
+          if (q.image) keys.add(q.image);
+          if (q.diagram) keys.add(q.diagram);
+        });
+        Object.keys(test.coordinates || {}).forEach((k) => keys.add(k));
+        return Array.from(keys);
+      },
+
+      async getMissingImageKeys(test) {
+        const needed = this.extractRequiredImageKeys(test);
+        if (!needed.length) return [];
+        const cached = await ImageDB.getTestImages(test.id);
+        const have = new Set(cached.map((c) => c.key));
+        return needed.filter((k) => !have.has(k));
+      },
+
+      async renderRichContent(text, testId) {
+        if (!text) return "";
+        // Escape HTML safely while preserving intentional inline <svg> diagrams if any
+        const parts = String(text).split(/(\[IMG:[A-Za-z0-9_\-.]+\])/g);
+        const out = [];
+        for (const p of parts) {
+          const m = p.match(/^\[IMG:([A-Za-z0-9_\-.]+)\]$/);
+          if (m) {
+            const key = m[1];
+            const url = await ImageDB.getImageUrl(testId, key);
+            if (url) {
+              this._blobUrls.push(url);
+              out.push(`<img class="exam-img" src="${url}" alt="${this.esc(key)}" data-img-key="${this.esc(key)}" />`);
+            } else {
+              out.push(`<span class="badge badge-gold" style="margin:4px 0;">🖼️ Missing local image: ${this.esc(key)}</span>`);
+            }
+          } else {
+            out.push(this.esc(p).replace(/\n/g, "<br>"));
+          }
+        }
+        return out.join("");
+      },
+
+      revokeTempUrls() {
+        this._blobUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
+        this._blobUrls = [];
+      },
+
+      typesetMath(el) {
+        if (window.MathJax && MathJax.typesetPromise) {
+          MathJax.typesetPromise(el ? [el] : undefined).catch(() => {});
+        }
+      },
+
+      toast(msg, type = "info") {
+        const root = document.getElementById("toast-root");
+        const div = document.createElement("div");
+        div.className = `toast ${type}`;
+        div.textContent = msg;
+        root.appendChild(div);
+        setTimeout(() => { div.style.opacity = "0"; setTimeout(() => div.remove(), 220); }, 3400);
+      },
+
+      openModal(html, wide = false) {
+        const root = document.getElementById("modal-root");
+        root.innerHTML = `
+          <div class="modal-backdrop" id="active-modal-backdrop">
+            <div class="modal-box ${wide ? "wide" : ""}">${html}</div>
+          </div>`;
+        document.getElementById("active-modal-backdrop").addEventListener("click", (e) => {
+          if (e.target.id === "active-modal-backdrop") this.closeModal();
+        });
+      },
+
+      closeModal() {
+        document.getElementById("modal-root").innerHTML = "";
+      },
+
+      setSyncStatus(mode, text) {
+        const pill = document.getElementById("sync-status-pill");
+        const label = document.getElementById("sync-status-text");
+        if (!pill || !label) return;
+        pill.className = `sync-pill ${mode === "syncing" ? "syncing" : mode === "offline" ? "offline" : ""}`;
+        label.textContent = text;
+      },
+
+      updateDriveBadge() {
+        const lbl = document.getElementById("drive-status-label");
+        const btn = document.getElementById("btn-drive-status");
+        if (!lbl || !btn) return;
+        if (DriveAPI.isConnected()) {
+          lbl.textContent = "Drive Connected";
+          btn.className = "btn btn-soft btn-sm";
+        } else {
+          lbl.textContent = "Connect Drive";
+          btn.className = "btn btn-outline btn-sm";
+        }
+      },
+
+      applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("ef_theme", theme);
+        this.state.settings.theme = theme;
+      },
+
+      /* --- Cloud + Local Persistence Layer --- */
+      _localKey() {
+        return `ef_local_data_${this.state.user?.uid || "guest"}`;
+      },
+
+      saveLocalSnapshot() {
+        try {
+          localStorage.setItem(this._localKey(), JSON.stringify({
+            tests: this.state.tests,
+            attempts: this.state.attempts,
+            bookmarks: this.state.bookmarks,
+            activity: this.state.activity.slice(0, 40),
+            settings: this.state.settings
+          }));
+        } catch (e) { console.warn("Local save skipped:", e); }
+      },
+
+      loadLocalSnapshot() {
+        try {
+          const raw = localStorage.getItem(this._localKey());
+          if (!raw) return false;
+          const d = JSON.parse(raw);
+          this.state.tests = d.tests || [];
+          this.state.attempts = d.attempts || [];
+          this.state.bookmarks = d.bookmarks || {};
+          this.state.activity = d.activity || [];
+          this.state.settings = { ...this.state.settings, ...(d.settings || {}) };
+          return true;
+        } catch { return false; }
+      },
+
+      async logActivity(icon, text, color = "blue") {
+        this.state.activity.unshift({ id: this.uid("act"), icon, text, color, ts: Date.now() });
+        this.state.activity = this.state.activity.slice(0, 40);
+        this.saveLocalSnapshot();
+        if (!this.state.isGuest && this.state.user) {
+          try {
+            await setDoc(doc(db, "users", this.state.user.uid, "meta", "activity"), {
+              items: this.state.activity, updatedAt: serverTimestamp()
+            });
+          } catch {}
+        }
+      },
+
+      async saveTest(testObj) {
+        const idx = this.state.tests.findIndex((t) => t.id === testObj.id);
+        if (idx >= 0) this.state.tests[idx] = testObj;
+        else this.state.tests.unshift(testObj);
+        this.saveLocalSnapshot();
+
+        if (!this.state.isGuest && this.state.user) {
+          this.setSyncStatus("syncing", "Syncing...");
+          try {
+            await setDoc(doc(db, "users", this.state.user.uid, "tests", testObj.id), {
+              ...testObj, updatedAt: Date.now()
+            });
+            this.setSyncStatus("synced", "Synced · Just now");
+          } catch (e) {
+            console.error(e);
+            this.setSyncStatus("offline", "Saved locally");
+            this.toast("Saved locally (Firestore sync failed: check security rules).", "warn");
+          }
+        }
+      },
+
+      async deleteTest(testId) {
+        this.state.tests = this.state.tests.filter((t) => t.id !== testId);
+        await ImageDB.deleteTestImages(testId);
+        this.saveLocalSnapshot();
+        if (!this.state.isGuest && this.state.user) {
+          try {
+            await deleteDoc(doc(db, "users", this.state.user.uid, "tests", testId));
+            this.setSyncStatus("synced", "Synced · Just now");
+          } catch {}
+        }
+      },
+
+      async saveAttempt(attemptObj) {
+        this.state.attempts.unshift(attemptObj);
+        this.saveLocalSnapshot();
+        if (!this.state.isGuest && this.state.user) {
+          this.setSyncStatus("syncing", "Syncing...");
+          try {
+            await setDoc(doc(db, "users", this.state.user.uid, "attempts", attemptObj.id), attemptObj);
+            this.setSyncStatus("synced", "Synced · Just now");
+          } catch {
+            this.setSyncStatus("offline", "Saved locally");
+          }
+        }
+      },
+
+      async toggleBookmark(testId, qId, meta = {}) {
+        const key = `${testId}::${qId}`;
+        if (this.state.bookmarks[key]) {
+          delete this.state.bookmarks[key];
+        } else {
+          this.state.bookmarks[key] = { testId, qId, ...meta, addedAt: Date.now() };
+          await this.logActivity("🔖", `Bookmarked Q${qId} (${meta.section || "General"})`, "purple");
+        }
+        this.saveLocalSnapshot();
+        if (!this.state.isGuest && this.state.user) {
+          try {
+            await setDoc(doc(db, "users", this.state.user.uid, "meta", "bookmarks"), {
+              map: this.state.bookmarks, updatedAt: Date.now()
+            });
+          } catch {}
+        }
+        return Boolean(this.state.bookmarks[key]);
+      },
+
+      async saveSettings() {
+        this.saveLocalSnapshot();
+        if (!this.state.isGuest && this.state.user) {
+          try {
+            await setDoc(doc(db, "users", this.state.user.uid, "meta", "settings"), this.state.settings);
+            this.setSyncStatus("synced", "Synced · Just now");
+          } catch {}
+        }
+      },
+
+      async syncFromCloud() {
+        if (this.state.isGuest || !this.state.user) {
+          this.loadLocalSnapshot();
+          this.setSyncStatus("offline", "Offline · Local Cache");
+          return;
+        }
+        this.setSyncStatus("syncing", "Syncing...");
+        this.loadLocalSnapshot();
+        try {
+          const uid = this.state.user.uid;
+          const [tSnap, aSnap, bDoc, actDoc, setDocSnap] = await Promise.all([
+            getDocs(collection(db, "users", uid, "tests")),
+            getDocs(collection(db, "users", uid, "attempts")),
+            getDoc(doc(db, "users", uid, "meta", "bookmarks")),
+            getDoc(doc(db, "users", uid, "meta", "activity")),
+            getDoc(doc(db, "users", uid, "meta", "settings"))
+          ]);
+
+          const cloudTests = [];
+          tSnap.forEach((d) => cloudTests.push(d.data()));
+          if (cloudTests.length || !this.state.tests.length) {
+            this.state.tests = cloudTests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          }
+
+          const cloudAttempts = [];
+          aSnap.forEach((d) => cloudAttempts.push(d.data()));
+          if (cloudAttempts.length || !this.state.attempts.length) {
+            this.state.attempts = cloudAttempts.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+          }
+
+          if (bDoc.exists()) this.state.bookmarks = bDoc.data().map || {};
+          if (actDoc.exists()) this.state.activity = actDoc.data().items || [];
+          if (setDocSnap.exists()) {
+            this.state.settings = { ...this.state.settings, ...setDocSnap.data() };
+            this.applyTheme(this.state.settings.theme || "light");
+          }
+
+          this.saveLocalSnapshot();
+          this.setSyncStatus("synced", "Synced · Just now");
+        } catch (err) {
+          console.warn("Cloud sync error:", err);
+          this.setSyncStatus("offline", "Local Mode");
+        }
+      },
+
+      /* --- Router --- */
+      navigate(view) {
+        this.state.currentView = view;
+        document.querySelectorAll(".nav-item").forEach((el) =>
+          el.classList.toggle("active", el.dataset.view === view)
+        );
+        document.querySelectorAll(".view-section").forEach((el) =>
+          el.classList.toggle("active", el.id === `view-${view}`)
+        );
+        document.getElementById("sidebar").classList.remove("mobile-open");
+
+        const renderMap = {
+          dashboard: () => this.renderDashboard?.(),
+          library: () => this.renderLibrary?.(),
+          importer: () => this.renderImporter?.(),
+          diagrams: () => this.renderDiagramManager?.(),
+          analytics: () => this.renderAnalytics?.(),
+          revision: () => this.renderRevision?.(),
+          settings: () => this.renderSettings?.(),
+          about: () => this.renderAbout?.()
+        };
+        if (renderMap[view]) renderMap[view]();
+      },
+
+      /* --- Auth & Shell Boot --- */
+      enterApp(user, isGuest = false) {
+        this.state.user = user;
+        this.state.isGuest = isGuest;
+        document.getElementById("auth-screen").classList.add("hidden");
+        document.getElementById("app-shell").classList.remove("hidden");
+
+        const displayName = user.displayName || (user.email ? user.email.split("@")[0] : "Guest");
+        const initials = displayName.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "EF";
+        document.getElementById("user-avatar").textContent = initials;
+        document.getElementById("user-name").textContent = displayName;
+        document.getElementById("dd-user-name").textContent = displayName;
+        document.getElementById("dd-user-email").textContent = isGuest ? "Offline Guest Mode" : (user.email || "Signed In");
+        this.updateDriveBadge();
+
+        this.syncFromCloud().then(() => {
+          this.navigate(this.state.currentView || "dashboard");
+          this.checkCrashRecovery?.();
+        });
+      },
+
+      bindCoreEvents() {
+        // Auth Tabs
+        let authMode = "login";
+        document.querySelectorAll(".auth-tab").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            authMode = btn.dataset.authMode;
+            document.querySelectorAll(".auth-tab").forEach((b) => b.classList.toggle("active", b === btn));
+            document.getElementById("auth-name-wrap").classList.toggle("hidden", authMode === "login");
+            document.getElementById("auth-submit-btn").textContent = authMode === "login" ? "Sign In" : "Create Account";
+          });
+        });
+
+        const showAuthErr = (msg) => {
+          const el = document.getElementById("auth-error");
+          el.textContent = msg;
+          el.classList.toggle("show", Boolean(msg));
+        };
+
+        document.getElementById("btn-google-signin").addEventListener("click", async () => {
+          showAuthErr("");
+          try {
+            const provider = new GoogleAuthProvider();
+            provider.addScope("https://www.googleapis.com/auth/drive.file");
+            const res = await signInWithPopup(auth, provider);
+            const cred = GoogleAuthProvider.credentialFromResult(res);
+            if (cred?.accessToken) DriveAPI.setToken(cred.accessToken);
+            localStorage.removeItem("ef_guest_mode");
+          } catch (e) {
+            showAuthErr(e.message || "Google sign-in failed. You can use Email or Guest Mode.");
+          }
+        });
+
+        document.getElementById("auth-email-form").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          showAuthErr("");
+          const email = document.getElementById("auth-email").value.trim();
+          const pass = document.getElementById("auth-password").value;
+          const name = document.getElementById("auth-name").value.trim();
+          try {
+            if (authMode === "signup") {
+              const cred = await createUserWithEmailAndPassword(auth, email, pass);
+              if (name) await updateProfile(cred.user, { displayName: name });
+            } else {
+              await signInWithEmailAndPassword(auth, email, pass);
+            }
+            localStorage.removeItem("ef_guest_mode");
+          } catch (err) {
+            showAuthErr(err.message || "Authentication error.");
+          }
+        });
+
+        document.getElementById("btn-guest-mode").addEventListener("click", () => {
+          localStorage.setItem("ef_guest_mode", "1");
+          this.enterApp({ uid: "guest", displayName: "Srujan (Guest)", email: "" }, true);
+        });
+
+        // Sidebar Navigation
+        document.getElementById("sidebar-nav").addEventListener("click", (e) => {
+          const btn = e.target.closest(".nav-item");
+          if (btn && btn.dataset.view) this.navigate(btn.dataset.view);
+        });
+
+        document.getElementById("btn-collapse-sidebar").addEventListener("click", () => {
+          document.getElementById("sidebar").classList.toggle("collapsed");
+        });
+
+        document.getElementById("btn-mobile-menu").addEventListener("click", () => {
+          document.getElementById("sidebar").classList.toggle("mobile-open");
+        });
+
+        document.getElementById("btn-theme-toggle").addEventListener("click", () => {
+          const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+          this.applyTheme(next);
+          this.saveSettings();
+        });
+
+        // Topbar Search (Ctrl+K)
+        const searchInput = document.getElementById("global-search");
+        window.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            searchInput.focus();
+          }
+        });
+        searchInput.addEventListener("input", (e) => {
+          this.state.searchQuery = e.target.value.trim().toLowerCase();
+          if (this.state.currentView !== "library" && this.state.searchQuery) {
+            this.navigate("library");
+          } else if (this.state.currentView === "library") {
+            this.renderLibrary?.();
+          }
+        });
+
+        // Drive Connect Button
+        document.getElementById("btn-drive-status").addEventListener("click", async () => {
+          try { await DriveAPI.connectInteractive(); }
+          catch (e) { this.toast(e.message || "Drive connection cancelled.", "warn"); }
+        });
+
+        // User Dropdown
+        const chip = document.getElementById("user-chip");
+        const dd = document.getElementById("user-dropdown");
+        chip.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dd.classList.toggle("hidden");
+        });
+        document.addEventListener("click", () => dd.classList.add("hidden"));
+
+        document.getElementById("dd-sync-now").addEventListener("click", async () => {
+          await this.syncFromCloud();
+          this.navigate(this.state.currentView);
+          this.toast("Cloud sync complete.", "success");
+        });
+        document.getElementById("dd-connect-drive").addEventListener("click", async () => {
+          try { await DriveAPI.connectInteractive(); } catch (e) { this.toast(e.message, "warn"); }
+        });
+        document.getElementById("dd-settings").addEventListener("click", () => this.navigate("settings"));
+        document.getElementById("dd-logout").addEventListener("click", async () => {
+          localStorage.removeItem("ef_guest_mode");
+          DriveAPI.setToken("");
+          if (!this.state.isGuest) await signOut(auth);
+          location.reload();
+        });
+      },
+
+      init() {
+        this.applyTheme(this.state.settings.theme || "light");
+        this.bindCoreEvents();
+
+        if (localStorage.getItem("ef_guest_mode") === "1") {
+          this.enterApp({ uid: "guest", displayName: "Srujan (Guest)", email: "" }, true);
+          return;
+        }
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            this.enterApp(user, false);
+          } else {
+            document.getElementById("app-shell").classList.add("hidden");
+            document.getElementById("auth-screen").classList.remove("hidden");
+          }
+        });
+      }
+    };
+
+    window.EF = EF;
+
+    // ==================== [PASTE PART 2 HERE] ====================
+
+    // ==================== [PASTE PART 3 HERE] ====================
+
+    // ==================== [PASTE PART 4 HERE] ====================
+
+    EF.init();
+  </script>
+</body>
+</html>
