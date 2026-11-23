@@ -3653,6 +3653,7 @@ ${coordsStr}
         draft.parsedTest = {
           title: obj.title || "Untitled Mock Test",
           exam: obj.exam || "GATE EE",
+          category: obj.category === "subject" ? "subject" : "full",
           subject: obj.subject || "Electrical Engineering",
           duration_minutes: Number(obj.duration_minutes || EF.state.settings.defaultDurationMin || 180),
           questions: normalizedQuestions
@@ -3863,28 +3864,46 @@ ${coordsStr}
             </div>
 
             ${pt ? `
-              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border-color);">
-                <div class="field">
-                  <label>Test Title</label>
-                  <input class="input" id="imp-meta-title" value="${EF.esc(pt.title)}" />
+              <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border-color);">
+                <div class="field" style="margin-bottom:14px;">
+                  <label>Paper Category — Is this a Full PYQ Paper or Subject / Topic-Specific Questions?</label>
+                  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap:10px;">
+                    <label style="border:1.5px solid ${(pt.category || "full") === "full" ? "var(--brand-blue)" : "var(--border-color)"}; background:${(pt.category || "full") === "full" ? "var(--brand-blue-soft)" : "var(--bg-subtle)"}; border-radius:12px; padding:11px 14px; cursor:pointer; display:flex; align-items:flex-start; gap:10px;">
+                      <input type="radio" name="imp-meta-category" value="full" ${(pt.category || "full") === "full" ? "checked" : ""} style="margin-top:3px;" />
+                      <div>
+                        <strong style="font-size:13.5px; color:var(--text-primary);">Full-Length Mocks</strong>
+                        <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">Complete PYQ or full-syllabus exam paper</div>
+                      </div>
+                    </label>
+                    <label style="border:1.5px solid ${pt.category === "subject" ? "var(--brand-blue)" : "var(--border-color)"}; background:${pt.category === "subject" ? "var(--brand-blue-soft)" : "var(--bg-subtle)"}; border-radius:12px; padding:11px 14px; cursor:pointer; display:flex; align-items:flex-start; gap:10px;">
+                      <input type="radio" name="imp-meta-category" value="subject" ${pt.category === "subject" ? "checked" : ""} style="margin-top:3px;" />
+                      <div>
+                        <strong style="font-size:13.5px; color:var(--text-primary);">Subject &amp; Topic Drills</strong>
+                        <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">Questions focused on a specific subject or topic</div>
+                      </div>
+                    </label>
+                  </div>
                 </div>
-                <div class="field">
-                  <label>Exam Track</label>
-                  <input class="input" id="imp-meta-exam" list="exam-track-list" value="${EF.esc(pt.exam)}" placeholder="GATE EE / UPSC ESE / TSPSC" />
-                  <datalist id="exam-track-list">
-                    <option value="GATE EE"></option>
-                    <option value="UPSC ESE (IES)"></option>
-                    <option value="TSPSC"></option>
-                    <option value="Subject Mock"></option>
-                  </datalist>
-                </div>
-                <div class="field">
-                  <label>Subject / Category</label>
-                  <input class="input" id="imp-meta-subject" value="${EF.esc(pt.subject)}" placeholder="e.g. Power Systems" />
-                </div>
-                <div class="field">
-                  <label>Duration (Minutes)</label>
-                  <input class="input" id="imp-meta-duration" type="number" min="5" max="360" value="${pt.duration_minutes}" />
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                  <div class="field">
+                    <label>Exam Track</label>
+                    <input class="input" id="imp-meta-exam" list="exam-track-list" value="${EF.esc(pt.exam)}" placeholder="GATE EE / UPSC ESE / TSPSC" />
+                    <datalist id="exam-track-list">
+                      <option value="GATE EE"></option>
+                      <option value="UPSC ESE (IES)"></option>
+                      <option value="TSPSC"></option>
+                      <option value="UIIC AO"></option>
+                    </datalist>
+                  </div>
+                  <div class="field">
+                    <label>Test Title</label>
+                    <input class="input" id="imp-meta-title" value="${EF.esc(pt.title)}" placeholder="${pt.category === "subject" ? "e.g. Network Theory — Transient Analysis" : "e.g. GATE EE 2024 Full PYQ"}" />
+                  </div>
+                  <div class="field">
+                    <label>Duration (Minutes)</label>
+                    <input class="input" id="imp-meta-duration" type="number" min="5" max="360" value="${pt.duration_minutes}" />
+                  </div>
                 </div>
               </div>
             ` : ""}
@@ -4089,9 +4108,14 @@ ${coordsStr}
 
         // Sync metadata inputs back to draft
         if (pt) {
+          container.querySelectorAll('input[name="imp-meta-category"]').forEach((rad) => {
+            rad.addEventListener("change", (e) => {
+              pt.category = e.target.value;
+              EF.renderImporter();
+            });
+          });
           document.getElementById("imp-meta-title").addEventListener("input", (e) => { pt.title = e.target.value; });
           document.getElementById("imp-meta-exam").addEventListener("input", (e) => { pt.exam = e.target.value; });
-          document.getElementById("imp-meta-subject").addEventListener("input", (e) => { pt.subject = e.target.value; });
           document.getElementById("imp-meta-duration").addEventListener("input", (e) => { pt.duration_minutes = Math.max(5, Number(e.target.value) || 60); });
 
           // Marking scheme edits
@@ -4288,7 +4312,8 @@ ${coordsStr}
               id: testId,
               title: cleanTitle,
               exam: (draft.parsedTest.exam || "General").trim(),
-              subject: (draft.parsedTest.subject || "Engineering").trim(),
+              category: draft.parsedTest.category === "subject" ? "subject" : "full",
+              subject: (draft.parsedTest.category === "subject" ? cleanTitle : (draft.parsedTest.subject || draft.parsedTest.exam || "Full-Length")).trim(),
               durationMinutes: Number(draft.parsedTest.duration_minutes) || 60,
               sections,
               totalMarks: Number(totalMarks.toFixed(2)),
@@ -4517,18 +4542,27 @@ ${coordsStr}
       /* -----------------------------------------------------------------
          1. TEST LIBRARY VIEW (WITH DIRECT DRIVE PDF DOWNLOAD ICON)
          ----------------------------------------------------------------- */
-      const libFilters = { exam: "ALL", subject: "ALL" };
+      const libFilters = { category: "full", exam: "ALL", title: "ALL" };
 
       EF.renderLibrary = async function () {
         const container = document.getElementById("view-library");
         const tests = EF.state.tests || [];
-        const exams = Array.from(new Set(tests.map((t) => t.exam || "General"))).sort();
-        const subjects = Array.from(new Set(tests.map((t) => t.subject || "Engineering"))).sort();
+        const fullCount = tests.filter((t) => (t.category || "full") === "full").length;
+        const subjectCount = tests.filter((t) => t.category === "subject").length;
+        const catTests = tests.filter((t) => (t.category || "full") === libFilters.category);
+        const exams = Array.from(new Set(catTests.map((t) => t.exam || "General"))).sort();
+        const titles = Array.from(new Set(
+          catTests
+            .filter((t) => libFilters.exam === "ALL" || (t.exam || "General") === libFilters.exam)
+            .map((t) => t.title || "Untitled Test")
+        )).sort();
+        if (libFilters.exam !== "ALL" && !exams.includes(libFilters.exam)) libFilters.exam = "ALL";
+        if (libFilters.title !== "ALL" && !titles.includes(libFilters.title)) libFilters.title = "ALL";
         const q = (EF.state.searchQuery || "").toLowerCase();
 
-        const filtered = tests.filter((t) => {
+        const filtered = catTests.filter((t) => {
           if (libFilters.exam !== "ALL" && (t.exam || "General") !== libFilters.exam) return false;
-          if (libFilters.subject !== "ALL" && (t.subject || "Engineering") !== libFilters.subject) return false;
+          if (libFilters.title !== "ALL" && (t.title || "Untitled Test") !== libFilters.title) return false;
           if (q) {
             const hay = `${t.title} ${t.exam} ${t.subject} ${(t.sections || []).join(" ")}`.toLowerCase();
             if (!hay.includes(q)) return false;
@@ -4555,20 +4589,29 @@ ${coordsStr}
             </div>
           </div>
 
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <button class="btn ${libFilters.category === "full" ? "btn-primary" : "btn-outline"} btn-sm" id="lib-tab-full" type="button">
+              📘 Full-Length Mocks (${fullCount})
+            </button>
+            <button class="btn ${libFilters.category === "subject" ? "btn-primary" : "btn-outline"} btn-sm" id="lib-tab-subject" type="button">
+              📗 Subject &amp; Topic Drills (${subjectCount})
+            </button>
+          </div>
+
           <div class="card" style="margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
             <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-              <select class="select" id="lib-filter-exam" style="width:auto; min-width:165px;">
-                <option value="ALL">All Exam Tracks (${tests.length})</option>
+              <select class="select" id="lib-filter-exam" style="width:auto; min-width:175px;">
+                <option value="ALL">Exam Track (All · ${catTests.length})</option>
                 ${exams.map((e) => `<option value="${EF.esc(e)}" ${libFilters.exam === e ? "selected" : ""}>${EF.esc(e)}</option>`).join("")}
               </select>
-              <select class="select" id="lib-filter-subject" style="width:auto; min-width:175px;">
-                <option value="ALL">All Subjects</option>
-                ${subjects.map((s) => `<option value="${EF.esc(s)}" ${libFilters.subject === s ? "selected" : ""}>${EF.esc(s)}</option>`).join("")}
+              <select class="select" id="lib-filter-subject" style="width:auto; min-width:210px;">
+                <option value="ALL">Test Title (All)</option>
+                ${titles.map((ti) => `<option value="${EF.esc(ti)}" ${libFilters.title === ti ? "selected" : ""}>${EF.esc(ti)}</option>`).join("")}
               </select>
               ${q ? `<span class="badge badge-blue">Search: "${EF.esc(q)}"</span>` : ""}
             </div>
             <div style="font-size:12.5px; color:var(--text-secondary);">
-              Showing <strong>${filtered.length}</strong> of ${tests.length} test(s)
+              Showing <strong>${filtered.length}</strong> of ${catTests.length} ${libFilters.category === "full" ? "mock(s)" : "drill(s)"}
             </div>
           </div>
 
@@ -4653,8 +4696,10 @@ ${coordsStr}
         // Library Event Bindings
         document.getElementById("lib-goto-import")?.addEventListener("click", () => EF.navigate("importer"));
         document.getElementById("lib-empty-import")?.addEventListener("click", () => EF.navigate("importer"));
-        document.getElementById("lib-filter-exam")?.addEventListener("change", (e) => { libFilters.exam = e.target.value; EF.renderLibrary(); });
-        document.getElementById("lib-filter-subject")?.addEventListener("change", (e) => { libFilters.subject = e.target.value; EF.renderLibrary(); });
+        document.getElementById("lib-tab-full")?.addEventListener("click", () => { libFilters.category = "full"; libFilters.exam = "ALL"; libFilters.title = "ALL"; EF.renderLibrary(); });
+        document.getElementById("lib-tab-subject")?.addEventListener("click", () => { libFilters.category = "subject"; libFilters.exam = "ALL"; libFilters.title = "ALL"; EF.renderLibrary(); });
+        document.getElementById("lib-filter-exam")?.addEventListener("change", (e) => { libFilters.exam = e.target.value; libFilters.title = "ALL"; EF.renderLibrary(); });
+        document.getElementById("lib-filter-subject")?.addEventListener("change", (e) => { libFilters.title = e.target.value; EF.renderLibrary(); });
 
         container.querySelectorAll(".btn-launch-test").forEach((b) =>
           b.addEventListener("click", () => EF.openTestLaunchFlow(b.dataset.tid))
@@ -6029,10 +6074,10 @@ ${coordsStr}
             <div class="hero-left">
               <div class="hero-title">Welcome back,<br>${EF.esc(firstName)}!</div>
               <div class="hero-subtitle">Your preparation journey continues...</div>
-              <button class="hero-cta-btn" id="qa-start-mock" type="button">
-                <span>▶</span>
-                <span>Start a Mock Test →</span>
-              </button>
+              <div class="hero-verse-card" style="margin-top:16px;">
+                <div class="hero-verse">“I can do all things through Christ who strengthens me.”</div>
+                <span class="hero-verse-ref">— Philippians 4:13</span>
+              </div>
             </div>
           </div>
 
@@ -6236,10 +6281,6 @@ ${coordsStr}
         document.getElementById("qa-browse-tests").addEventListener("click", () => EF.navigate("library"));
         document.getElementById("qa-manage-diagrams").addEventListener("click", () => EF.navigate("diagrams"));
         document.getElementById("dash-view-all-act").addEventListener("click", () => EF.navigate("analytics"));
-        document.getElementById("qa-start-mock").addEventListener("click", () => {
-          if (latestTest) EF.openTestLaunchFlow(latestTest.id);
-          else EF.navigate("importer");
-        });
         document.getElementById("dash-att-limit").addEventListener("change", (e) => {
           dashAttemptLimit = Number(e.target.value) || 10;
           EF.renderDashboard();
