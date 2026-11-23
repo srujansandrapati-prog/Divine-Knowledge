@@ -1710,6 +1710,348 @@
       .hero-left { max-width: 100%; }
       .hero-art-stage { opacity: 0.42; }
     }
+
+    /* =====================================================================
+       MOCKUP-MATCHED VISUAL OVERRIDES (STYLE & ARTWORK ONLY)
+       ===================================================================== */
+
+    /* 1. AUTH SCREEN — Open Bible Sunrise Hero + Crisp Rounded Form Sheet */
+    .auth-hero {
+      background:
+        linear-gradient(180deg, rgba(6, 24, 66, 0.72) 0%, rgba(16, 52, 118, 0.12) 38%, rgba(255, 248, 232, 0.08) 65%, rgba(6, 20, 48, 0.35) 100%),
+        url('assets/auth-bible-sunrise.jpg') center bottom / cover no-repeat,
+        linear-gradient(180deg, #071F4F 0%, #133E82 36%, #5C7DB3 66%, #F3CA8A 100%);
+      justify-content: flex-start;
+      gap: 22px;
+      padding: 40px 30px 180px;
+    }
+    .auth-verse-sky {
+      position: relative;
+      z-index: 2;
+      max-width: 315px;
+      margin-top: 4px;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    .auth-verse-sky p {
+      font-family: 'Merriweather', Georgia, serif;
+      font-style: italic;
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1.55;
+      color: #0E2147;
+      text-shadow: 0 1px 14px rgba(255, 252, 242, 0.95), 0 0 22px rgba(255, 246, 218, 0.85);
+    }
+    .auth-verse-sky span {
+      display: block;
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1A325C;
+      text-shadow: 0 1px 10px rgba(255, 255, 255, 0.9);
+    }
+    .auth-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .auth-input-wrap svg {
+      position: absolute;
+      left: 14px;
+      width: 17px;
+      height: 17px;
+      color: #7D92B2;
+      pointer-events: none;
+    }
+    .auth-input-wrap .input {
+      padding-left: 42px;
+    }
+    .auth-footer-note {
+      font-size: 12px;
+      font-weight: 600;
+      color: #263E68;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    /* 2. SIDEBAR — Mountain Silhouette + Capsule Active Pill + Notched Gold Verse Frame */
+    .sidebar {
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180' preserveAspectRatio='none'%3E%3Cpath d='M0 118 Q65 82 132 104 T255 72 L300 94 L300 180 L0 180 Z' fill='%23163B7A' fill-opacity='0.26'/%3E%3Cpath d='M0 142 Q90 106 185 128 T300 105 L300 180 L0 180 Z' fill='%23041028' fill-opacity='0.65'/%3E%3C/svg%3E"),
+        radial-gradient(circle at 50% 8%, rgba(255, 214, 102, 0.22), transparent 32%),
+        linear-gradient(180deg, var(--sidebar-bg-1) 0%, var(--sidebar-bg-2) 54%, var(--sidebar-bg-3) 100%);
+      background-position: bottom center, top center, center;
+      background-size: 100% 210px, 100% 100%, 100% 100%;
+      background-repeat: no-repeat;
+    }
+    .nav-item {
+      border-radius: 99px;
+      padding: 11px 18px;
+    }
+    .nav-item.active {
+      background: linear-gradient(90deg, #2780FF 0%, #154BB8 100%);
+      box-shadow: 0 8px 22px rgba(22, 104, 243, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    }
+    .sidebar-verse {
+      position: relative;
+      margin-top: 8px;
+      padding: 18px 14px 14px;
+      border-radius: 18px;
+      border: 1.5px solid rgba(242, 196, 98, 0.72);
+      background: linear-gradient(180deg, rgba(10, 26, 62, 0.74) 0%, rgba(5, 16, 40, 0.88) 100%);
+    }
+    .sidebar-verse-ornament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: -28px auto 8px;
+      width: fit-content;
+      padding: 0 10px;
+      background: #081C44;
+      border-radius: 99px;
+      color: #FBC95C;
+      font-family: 'Merriweather', Georgia, serif;
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 700;
+    }
+    .sidebar-verse-ornament::before,
+    .sidebar-verse-ornament::after {
+      content: "";
+      width: 18px;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, #FBC95C, transparent);
+    }
+
+    /* 3. DASHBOARD HERO BANNER — Sunrise Cross Picture + Golden Pill CTA */
+    .hero-banner {
+      background:
+        linear-gradient(92deg, rgba(224, 234, 252, 0.88) 0%, rgba(235, 238, 250, 0.56) 44%, rgba(255, 244, 220, 0.08) 74%, rgba(16, 32, 64, 0.14) 100%),
+        url('assets/hero-calvary.jpg') right center / cover no-repeat,
+        linear-gradient(112deg, #CEDEF8 0%, #DFE0F4 35%, #F6D8B2 68%, #F4BC66 100%);
+      min-height: 235px;
+      grid-template-columns: 1.25fr 0.85fr;
+      padding: 30px 32px;
+    }
+    .hero-banner::before { display: none; }
+    [data-theme="dark"] .hero-banner {
+      background:
+        linear-gradient(92deg, rgba(9, 21, 46, 0.9) 0%, rgba(15, 34, 70, 0.62) 48%, rgba(15, 28, 56, 0.22) 100%),
+        url('assets/hero-calvary.jpg') right center / cover no-repeat,
+        linear-gradient(112deg, #0B1934 0%, #163062 48%, #3F3124 84%, #122446 100%);
+    }
+    .hero-cta-btn {
+      margin-top: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: 99px;
+      background: linear-gradient(180deg, #FFD359 0%, #F5AF22 100%);
+      color: #0D1F44;
+      font-size: 14.5px;
+      font-weight: 800;
+      box-shadow: 0 8px 22px rgba(234, 154, 16, 0.36), inset 0 1px 0 rgba(255, 248, 219, 0.8);
+      transition: var(--transition);
+    }
+    .hero-cta-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.04);
+      box-shadow: 0 12px 26px rgba(234, 154, 16, 0.44);
+    }
+
+    /* Quick Access 4-Tile Pastel Strip */
+    .quick-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .quick-tile.compact {
+      min-height: 98px;
+      padding: 14px 10px;
+      align-items: center;
+      text-align: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 16px;
+    }
+    .quick-tile.qt-amber {
+      background: linear-gradient(180deg, #FFF5E6 0%, #FDE8C8 100%);
+      color: #B9690E;
+      border-color: #FAD9A7;
+    }
+    [data-theme="dark"] .quick-tile.qt-amber {
+      background: rgba(214, 133, 20, 0.2);
+      color: #FDE68A;
+      border-color: rgba(251, 191, 36, 0.28);
+    }
+
+    /* Parchment Verse Card with Botanical Laurel Sprigs */
+    .votd-top-banner {
+      position: relative;
+      overflow: hidden;
+      padding: 20px 30px;
+    }
+    .votd-top-banner::before,
+    .votd-top-banner::after {
+      content: "";
+      position: absolute;
+      bottom: 6px;
+      width: 64px;
+      height: 54px;
+      opacity: 0.72;
+      pointer-events: none;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 70' fill='none'%3E%3Cpath d='M10 64 Q26 42 54 18' stroke='%237A6522' stroke-width='2.2' stroke-linecap='round'/%3E%3Cellipse cx='20' cy='44' rx='5' ry='11' transform='rotate(-38 20 44)' fill='%2388782B'/%3E%3Cellipse cx='33' cy='32' rx='5' ry='11' transform='rotate(-35 33 32)' fill='%239B8B38'/%3E%3Cellipse cx='46' cy='20' rx='4.5' ry='10' transform='rotate(-30 46 20)' fill='%23726723'/%3E%3Cellipse cx='30' cy='50' rx='5' ry='10' transform='rotate(34 30 50)' fill='%23726723'/%3E%3Cellipse cx='43' cy='39' rx='5' ry='10' transform='rotate(30 43 39)' fill='%2388782B'/%3E%3C/svg%3E");
+    }
+    .votd-top-banner::before { left: 8px; }
+    .votd-top-banner::after { right: 8px; transform: scaleX(-1); }
+
+    /* 4. ANALYTICS PASTEL METRIC STRIP */
+    .an-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .an-kpi-card {
+      border-radius: 18px;
+      padding: 18px 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+    .an-kpi-green { background: linear-gradient(180deg, #F3FCF7 0%, #E7F8EE 100%); border-color: #C9EED9; }
+    .an-kpi-blue  { background: linear-gradient(180deg, #F1F7FF 0%, #E5F0FF 100%); border-color: #C7DFFE; }
+    .an-kpi-cool  { background: linear-gradient(180deg, #FFFFFF 0%, #F4F8FF 100%); border-color: #DCE8FA; }
+    .an-kpi-mint  { background: linear-gradient(180deg, #F2FCF8 0%, #E4F7EF 100%); border-color: #C7ECDC; }
+    [data-theme="dark"] .an-kpi-green,
+    [data-theme="dark"] .an-kpi-blue,
+    [data-theme="dark"] .an-kpi-cool,
+    [data-theme="dark"] .an-kpi-mint {
+      background: linear-gradient(180deg, #132344 0%, #0E1B36 100%);
+      border-color: var(--border-color);
+    }
+    .an-kpi-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+    }
+    .an-kpi-val { font-size: 22px; font-weight: 800; line-height: 1.1; color: var(--text-primary); }
+    .an-kpi-lbl { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+    /* 5. ABOUT PAGE — Icon Header, Laptop+Bible Showcase, Green Checks & Scenic Footer */
+    .about-hero-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .about-info-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #103578 0%, #1A58C8 100%);
+      color: #FFFFFF;
+      font-family: 'Merriweather', Georgia, serif;
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 6px 16px rgba(16, 53, 120, 0.28);
+    }
+    .about-art-card {
+      background: #EFF5FF;
+      border: 1px solid var(--border-color);
+      border-radius: 22px;
+      overflow: hidden;
+      margin: 16px 0 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    [data-theme="dark"] .about-art-card { background: #10203F; }
+    .about-art-card img {
+      width: 100%;
+      max-height: 290px;
+      object-fit: cover;
+      display: block;
+    }
+    .about-check-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 11px;
+      margin: 14px 0 18px;
+    }
+    .about-check-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .about-check-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #12986B;
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .about-scenic-footer {
+      margin-top: 20px;
+      height: 155px;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      background:
+        linear-gradient(180deg, rgba(239, 245, 255, 0.72) 0%, rgba(239, 245, 255, 0) 36%),
+        url('assets/hero-calvary.jpg') right bottom / cover no-repeat;
+    }
+    [data-theme="dark"] .about-scenic-footer {
+      background:
+        linear-gradient(180deg, rgba(8, 17, 36, 0.78) 0%, rgba(8, 17, 36, 0.1) 42%),
+        url('assets/hero-calvary.jpg') right bottom / cover no-repeat;
+    }
+
+    @media (max-width: 940px) {
+      .auth-hero { padding: 30px 20px 145px; min-height: 365px; }
+      .hero-banner {
+        grid-template-columns: 1fr;
+        padding: 20px 17px;
+        min-height: 215px;
+      }
+      .hero-left { max-width: 82%; }
+      .hero-cta-btn { padding: 10px 18px; font-size: 13.5px; }
+      .quick-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .an-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .votd-top-banner { padding: 15px 16px; }
+      .votd-top-banner::before,
+      .votd-top-banner::after { width: 42px; height: 36px; opacity: 0.4; }
+      .sidebar-verse { margin-top: 8px; padding: 16px 12px 12px; }
+      .about-scenic-footer { height: 120px; }
+    }
 </style>
 </head>
 <body>
@@ -1720,62 +2062,13 @@
   <div id="auth-screen">
     <div class="auth-card">
       <div class="auth-hero">
-        <!-- High-Craft Calvary Sunrise & Cross Scene (Bottom-Anchored, Never Clipped) -->
-        <svg class="auth-hero-svg" viewBox="0 0 460 340" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-          <defs>
-            <radialGradient id="authSunGlow" cx="72%" cy="54%" r="54%">
-              <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.98" />
-              <stop offset="28%" stop-color="#FDE08D" stop-opacity="0.72" />
-              <stop offset="62%" stop-color="#F59E0B" stop-opacity="0.25" />
-              <stop offset="100%" stop-color="#102142" stop-opacity="0" />
-            </radialGradient>
-            <linearGradient id="authCrossBeam" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#1C1410" />
-              <stop offset="72%" stop-color="#382516" />
-              <stop offset="100%" stop-color="#FDE68A" />
-            </linearGradient>
-          </defs>
-          <rect width="460" height="340" fill="url(#authSunGlow)" />
-          <!-- Volumetric Dawn Rays -->
-          <g fill="#FFF7D6" opacity="0.14">
-            <polygon points="332,184 180,25 225,18" />
-            <polygon points="332,184 265,8 302,5" />
-            <polygon points="332,184 345,4 382,10" />
-            <polygon points="332,184 415,28 448,55" />
-            <polygon points="332,184 125,85 152,60" />
-          </g>
-          <!-- Glowing Sun Disc -->
-          <circle cx="332" cy="184" r="34" fill="#FFFDF5" opacity="0.92" />
-          <circle cx="332" cy="184" r="48" fill="#FDE08D" opacity="0.34" />
-          <!-- Distant Soaring Doves -->
-          <path d="M238 96 Q244 89 250 95 Q256 89 262 96 Q255 93 250 98 Q245 93 238 96 Z" fill="#FFF7D6" opacity="0.65" />
-          <path d="M266 78 Q270 73 275 77 Q280 73 284 78 Q279 76 275 80 Q271 76 266 78 Z" fill="#FFF7D6" opacity="0.5" />
-          <!-- Layered Mountain Silhouettes -->
-          <path d="M0 238 Q115 190 235 218 T460 198 L460 340 L0 340 Z" fill="#173263" opacity="0.55" />
-          <path d="M0 264 Q150 225 295 252 T460 224 L460 340 L0 340 Z" fill="#0F2144" opacity="0.82" />
-          <path d="M0 296 Q180 260 335 282 Q405 270 460 288 L460 340 L0 340 Z" fill="#091326" />
-          <!-- Golgotha Hill Crest & Rim-Lit Calvary Cross -->
-          <path d="M286 282 Q334 252 384 282 Z" fill="#091326" />
-          <g transform="translate(334, 134)">
-            <!-- Soft Golden Halo Behind Crossbar -->
-            <circle cx="0" cy="34" r="32" fill="#FFFBEB" opacity="0.22" />
-            <!-- Vertical Timber with Golden Rim Highlight -->
-            <rect x="-5" y="0" width="10" height="132" rx="1.8" fill="url(#authCrossBeam)" />
-            <!-- Horizontal Crossbar with Golden Rim Highlight -->
-            <rect x="-34" y="28" width="68" height="9" rx="1.8" fill="url(#authCrossBeam)" />
-            <!-- Stone Base -->
-            <path d="M-16 132 L-10 123 L10 123 L16 132 Z" fill="#160F0B" />
-          </g>
-        </svg>
-
         <div class="auth-hero-content">
           <div class="auth-brand">
-            <!-- Ornate Open Scripture & Radiant Cross Emblem -->
-            <svg width="50" height="50" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <svg width="56" height="56" viewBox="0 0 64 64" fill="none" aria-hidden="true">
               <defs>
-                <radialGradient id="authLogoHalo" cx="50%" cy="34%" r="46%">
-                  <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.95" />
-                  <stop offset="55%" stop-color="#FCD34D" stop-opacity="0.4" />
+                <radialGradient id="authLogoHalo" cx="50%" cy="34%" r="48%">
+                  <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.98" />
+                  <stop offset="55%" stop-color="#FCD34D" stop-opacity="0.45" />
                   <stop offset="100%" stop-color="#FCD34D" stop-opacity="0" />
                 </radialGradient>
                 <linearGradient id="authLogoCross" x1="0" y1="0" x2="1" y2="1">
@@ -1783,49 +2076,36 @@
                   <stop offset="100%" stop-color="#F59E0B" />
                 </linearGradient>
               </defs>
-              <circle cx="32" cy="22" r="21" fill="url(#authLogoHalo)" />
-              <!-- Sunbeams -->
-              <g stroke="#FDE68A" stroke-width="1.5" stroke-linecap="round" opacity="0.78">
+              <circle cx="32" cy="22" r="22" fill="url(#authLogoHalo)" />
+              <g stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round" opacity="0.85">
                 <line x1="32" y1="3" x2="32" y2="7" />
                 <line x1="17" y1="9" x2="20" y2="12" />
                 <line x1="47" y1="9" x2="44" y2="12" />
                 <line x1="11" y1="21" x2="15" y2="21" />
                 <line x1="53" y1="21" x2="49" y2="21" />
               </g>
-              <!-- Beveled Cross -->
-              <rect x="29.5" y="9" width="5" height="29" rx="1.4" fill="url(#authLogoCross)" />
-              <rect x="20" y="16.5" width="24" height="4.6" rx="1.4" fill="url(#authLogoCross)" />
-              <!-- Open Bible Cover & Pages -->
-              <path d="M8 48C16 44 24 44.5 32 50C40 44.5 48 44 56 48V34.5C48 30.8 40 31.2 32 36.5C24 31.2 16 30.8 8 34.5V48Z" fill="rgba(255,255,255,0.14)" stroke="#FFFFFF" stroke-width="2.2" stroke-linejoin="round" />
-              <path d="M32 36.5V50" stroke="#FCD34D" stroke-width="1.8" />
-              <!-- Subtle Scripture Page Lines -->
-              <path d="M13 38.5C18 36.8 23 37 27.5 39.2M13 42.5C18 40.8 23 41 27.5 43.2M51 38.5C46 36.8 41 37 36.5 39.2M51 42.5C46 40.8 41 41 36.5 43.2" stroke="#BFDBFE" stroke-width="1.4" stroke-linecap="round" />
-              <!-- Golden Ribbon Bookmark -->
-              <path d="M30 49.5L28 57L32 54.5L36 57L34 49.5" fill="#F59E0B" />
-              <path d="M10 52C17.5 49 24.5 49.5 32 54C39.5 49.5 46.5 49 54 52" stroke="#93C5FD" stroke-width="1.8" stroke-linecap="round" />
+              <rect x="29.5" y="9" width="5" height="31" rx="1.4" fill="url(#authLogoCross)" />
+              <rect x="20" y="16.5" width="24" height="4.8" rx="1.4" fill="url(#authLogoCross)" />
+              <path d="M8 49C16 45 24 45.5 32 51C40 45.5 48 45 56 49V35.5C48 31.8 40 32.2 32 37.5C24 32.2 16 31.8 8 35.5V49Z" fill="rgba(255,255,255,0.16)" stroke="#FFFFFF" stroke-width="2.3" stroke-linejoin="round" />
+              <path d="M32 37.5V51" stroke="#FCD34D" stroke-width="1.8" />
+              <path d="M13 39.5C18 37.8 23 38 27.5 40.2M13 43.5C18 41.8 23 42 27.5 44.2M51 39.5C46 37.8 41 38 36.5 40.2M51 43.5C46 41.8 41 42 36.5 44.2" stroke="#E0EEFF" stroke-width="1.5" stroke-linecap="round" />
             </svg>
             <div>
               <h1>ExamForge</h1>
-              <div style="font-size:11.5px; color:#FCD596; letter-spacing:0.06em;">ENGINEERING MOCK SIMULATOR</div>
+              <div style="font-size:12.5px; color:#E8F1FF; letter-spacing:0.04em; margin-top:2px;">Prepare · Perform · Excel</div>
             </div>
           </div>
-          <p class="auth-tagline">
-            Prepare with purpose. Perform with faith. Excel with excellence.
-          </p>
-          <p style="font-size:12.5px; color:rgba(255,255,255,0.74); margin-top:12px; max-width:320px; line-height:1.6;">
-            Zero-cost, cloud-synced exam simulation for GATE, UPSC ESE, and technical exams — built for focus, accuracy, and peace of mind.
-          </p>
         </div>
 
-        <div class="auth-verse-box">
-          <p>“Commit to the Lord whatever you do, and He will establish your plans.”</p>
-          <span>— Proverbs 16:3</span>
+        <div class="auth-verse-sky">
+          <p>“I can do all things through Christ who strengthens me.”</p>
+          <span>— Philippians 4:13</span>
         </div>
       </div>
 
       <div class="auth-form-pane">
-        <h2>Welcome back</h2>
-        <p class="sub">Sign in to sync your tests, attempts, analytics & Google Drive vault.</p>
+        <h2>Sign in to continue</h2>
+        <p class="sub">Sync your tests, attempts, analytics &amp; Google Drive vault.</p>
 
         <button class="btn-google" id="btn-google-signin" type="button">
           <svg width="18" height="18" viewBox="0 0 24 24">
@@ -1834,10 +2114,10 @@
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09L2.18 7.07C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.71-2.88c-.98.66-2.23 1.06-3.57 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
           </svg>
-          Continue with Google (Sync + Drive)
+          Continue with Google
         </button>
 
-        <div class="auth-divider">or use email</div>
+        <div class="auth-divider">or</div>
 
         <div class="auth-tabs">
           <button class="auth-tab active" data-auth-mode="login" type="button">Sign In</button>
@@ -1850,23 +2130,27 @@
             <input id="auth-name" class="input" type="text" placeholder="e.g. Srujan" />
           </div>
           <div class="field">
-            <label for="auth-email">Email</label>
-            <input id="auth-email" class="input" type="email" required placeholder="you@example.com" />
+            <label for="auth-email">Email Address</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+              <input id="auth-email" class="input" type="email" required placeholder="Email Address" />
+            </div>
           </div>
           <div class="field">
             <label for="auth-password">Password</label>
-            <input id="auth-password" class="input" type="password" required minlength="6" placeholder="Minimum 6 characters" />
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              <input id="auth-password" class="input" type="password" required minlength="6" placeholder="Password" />
+            </div>
           </div>
           <div id="auth-error" class="auth-error"></div>
-          <button class="btn btn-primary" id="auth-submit-btn" type="submit" style="width:100%; padding:11px;">Sign In</button>
+          <button class="btn btn-primary" id="auth-submit-btn" type="submit" style="width:100%; padding:12px;">Sign In</button>
         </form>
 
         <button class="btn btn-outline" id="btn-guest-mode" type="button" style="width:100%;">
           Continue in Offline / Guest Mode
         </button>
-        <p style="font-size:11.5px; color:#7A8CA8; text-align:center;">
-          Guest Mode saves tests & WebP diagrams locally on this browser. Sign in anytime to cloud-sync.
-        </p>
+        <p class="auth-footer-note">Zero-Cost. Cloud-Synced. Always with you. 💙</p>
       </div>
     </div>
   </div>
@@ -1956,9 +2240,9 @@
 
       <div class="sidebar-footer">
         <div class="sidebar-verse">
-          <div class="sidebar-verse-leaf">✦</div>
+          <div class="sidebar-verse-ornament">“</div>
           <p>“Commit to the Lord whatever you do, and He will establish your plans.”</p>
-          <span>Proverbs 16:3</span>
+          <span>— Proverbs 16:3</span>
         </div>
         <div class="theme-switch-row">
           <span title="Light Theme" style="font-size:13px;">☀️</span>
@@ -2970,6 +3254,8 @@
           const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
           this.applyTheme(next);
           this.saveSettings();
+          if (this.state.currentView === "dashboard") this.renderDashboard?.();
+          else if (this.state.currentView === "analytics") this.renderAnalytics?.();
         };
         document.getElementById("btn-theme-toggle").addEventListener("click", flipTheme);
         document.getElementById("btn-topbar-theme")?.addEventListener("click", flipTheme);
@@ -5726,82 +6012,18 @@ ${coordsStr}
         const attempts = EF.state.attempts || [];
         const activities = EF.state.activity || [];
         const latestTest = EF.state.tests[0] || null;
+        const firstName = (EF.state.user?.displayName || "Student").split(/\s+/)[0];
 
         container.innerHTML = `
-          <!-- Sunrise & Calvary Cross Hero Banner (Philippians 4:13) -->
+          <!-- Sunrise & Calvary Cross Hero Banner -->
           <div class="hero-banner">
             <div class="hero-left">
-              <div class="hero-pill">✦ Faith-Inspired Engineering Simulator</div>
-              <div class="hero-title">Exam<span>Forge</span></div>
-              <div class="hero-subtitle">Your Personal Engineering Exam Simulator</div>
-              <div class="hero-tagline">Prepare with purpose. Perform with faith. Excel with excellence.</div>
-            </div>
-
-            <!-- Dedicated Proportional Art Frame: Full Calvary Sunrise, Rays, Doves & Rim-Lit Cross (Never Clipped) -->
-            <div class="hero-art-stage" aria-hidden="true">
-              <svg viewBox="0 0 420 200" preserveAspectRatio="xMidYMax meet">
-                <defs>
-                  <radialGradient id="calvarySunHalo" cx="50%" cy="62%" r="52%">
-                    <stop offset="0%" stop-color="#FFFDF5" stop-opacity="0.98" />
-                    <stop offset="30%" stop-color="#FDE08D" stop-opacity="0.76" />
-                    <stop offset="65%" stop-color="#F59E0B" stop-opacity="0.28" />
-                    <stop offset="100%" stop-color="#F59E0B" stop-opacity="0" />
-                  </radialGradient>
-                  <linearGradient id="calvaryCrossGrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stop-color="#2D1B0E" />
-                    <stop offset="72%" stop-color="#59371C" />
-                    <stop offset="100%" stop-color="#FDE68A" />
-                  </linearGradient>
-                  <linearGradient id="hillFrontGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#1E3A6E" />
-                    <stop offset="100%" stop-color="#0E1C38" />
-                  </linearGradient>
-                </defs>
-
-                <!-- Glowing Dawn Aura -->
-                <ellipse cx="210" cy="126" rx="195" ry="118" fill="url(#calvarySunHalo)" />
-
-                <!-- Volumetric Golden Sunbeams -->
-                <g fill="#FFF7D6" opacity="0.34">
-                  <polygon points="210,126 70,12 108,4" />
-                  <polygon points="210,126 142,2 174,0" />
-                  <polygon points="210,126 246,0 278,2" />
-                  <polygon points="210,126 312,4 350,12" />
-                  <polygon points="210,126 24,52 46,32" />
-                  <polygon points="210,126 374,32 396,52" />
-                </g>
-
-                <!-- Morning Sun Orb -->
-                <circle cx="210" cy="126" r="28" fill="#FFFDF7" opacity="0.96" />
-                <circle cx="210" cy="126" r="40" fill="#FDE08D" opacity="0.36" />
-
-                <!-- Soft Dawn Clouds -->
-                <path d="M44 64 Q58 54 74 61 Q88 53 102 64 Q86 69 44 64 Z" fill="#FFFFFF" opacity="0.52" />
-                <path d="M312 56 Q326 46 342 53 Q355 46 368 56 Q350 61 312 56 Z" fill="#FFFFFF" opacity="0.48" />
-
-                <!-- Distant Soaring Doves -->
-                <path d="M124 44 Q130 37 136 43 Q142 37 148 44 Q141 41 136 46 Q131 41 124 44 Z" fill="#6B4423" opacity="0.62" />
-                <path d="M276 34 Q281 28 286 33 Q291 28 296 34 Q290 31 286 35 Q282 31 276 34 Z" fill="#6B4423" opacity="0.52" />
-
-                <!-- Layered Mountain & Valley Ridges -->
-                <path d="M10 176 Q95 130 185 152 T340 136 Q380 144 410 176 Z" fill="#5D7BA6" opacity="0.32" />
-                <path d="M24 184 Q120 138 215 156 T396 144 L406 184 Z" fill="#27477D" opacity="0.55" />
-                <!-- Calvary Summit Mound & Foreground Hill -->
-                <path d="M36 194 Q130 162 210 144 Q290 162 384 194 Z" fill="url(#hillFrontGrad)" />
-                <path d="M168 156 Q210 134 252 156 Z" fill="#10203E" />
-
-                <!-- Majestic Rim-Lit Calvary Cross -->
-                <g transform="translate(210, 26)">
-                  <!-- Subtle Cross Halo -->
-                  <circle cx="0" cy="34" r="30" fill="#FFFBEB" opacity="0.35" />
-                  <!-- Vertical Post -->
-                  <rect x="-4.5" y="0" width="9" height="118" rx="1.8" fill="url(#calvaryCrossGrad)" />
-                  <!-- Crossbeam -->
-                  <rect x="-32" y="25" width="64" height="8.5" rx="1.8" fill="url(#calvaryCrossGrad)" />
-                  <!-- Stepped Stone Mound Base -->
-                  <path d="M-15 118 L-9 109 L9 109 L15 118 Z" fill="#23150B" />
-                </g>
-              </svg>
+              <div class="hero-title">Welcome back,<br>${EF.esc(firstName)}!</div>
+              <div class="hero-subtitle">Your preparation journey continues...</div>
+              <button class="hero-cta-btn" id="qa-start-mock" type="button">
+                <span>▶</span>
+                <span>Start a Mock Test →</span>
+              </button>
             </div>
 
             <div class="hero-right">
@@ -5812,33 +6034,18 @@ ${coordsStr}
             </div>
           </div>
 
-          <!-- Verse of the Day Spotlight (Placed Above Dashboard Grids & Charts) -->
-          <div class="votd-top-banner">
-            <div class="votd-top-main">
-              <div class="votd-top-head">
-                <span class="votd-label">✦ Verse of the Day</span>
-                <span style="font-size:10.5px; color:rgba(255,255,255,0.68); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:99px;">Offline Ready</span>
-                <span class="votd-ref" style="margin-left:auto;">— ${EF.esc(verse.ref)}</span>
-              </div>
-              <div class="votd-top-quote">“${EF.esc(verse.text)}”</div>
-            </div>
-            <div class="votd-top-side">
-              ${EF.esc(verse.note)}
-            </div>
-          </div>
-
           <!-- 5 KPI Summary Cards -->
           <div class="kpi-grid">
             <div class="kpi-card clickable" id="kpi-tests">
               <div class="kpi-icon" style="background:var(--brand-gold-soft); color:var(--brand-gold);">🏆</div>
               <div>
                 <div class="kpi-val">${st.totalTests}</div>
-                <div class="kpi-lbl">Total Tests →</div>
+                <div class="kpi-lbl">Total Tests</div>
               </div>
             </div>
 
             <div class="kpi-card">
-              <div class="kpi-icon" style="background:var(--brand-green-soft); color:var(--brand-green);">🎯</div>
+              <div class="kpi-icon" style="background:var(--brand-red-soft); color:var(--brand-red);">🎯</div>
               <div>
                 <div class="kpi-val">
                   ${st.bestScore.toFixed(1)}%
@@ -5856,8 +6063,16 @@ ${coordsStr}
               </div>
             </div>
 
+            <div class="kpi-card clickable" id="kpi-bookmarks">
+              <div class="kpi-icon" style="background:var(--brand-blue-soft); color:var(--brand-blue);">🔖</div>
+              <div>
+                <div class="kpi-val">${st.bookmarksCount}</div>
+                <div class="kpi-lbl">Bookmarks</div>
+              </div>
+            </div>
+
             <div class="kpi-card">
-              <div class="kpi-icon" style="background:var(--brand-gold-soft); color:#E07B18;">📈</div>
+              <div class="kpi-icon" style="background:var(--brand-green-soft); color:var(--brand-green);">📈</div>
               <div>
                 <div class="kpi-val" style="color:${st.improvement >= 0 ? "var(--brand-green)" : "var(--brand-red)"};">
                   ${st.improvement >= 0 ? "+" : ""}${st.improvement}%
@@ -5865,22 +6080,54 @@ ${coordsStr}
                 <div class="kpi-lbl">Improvement</div>
               </div>
             </div>
+          </div>
 
-            <div class="kpi-card clickable" id="kpi-bookmarks">
-              <div class="kpi-icon" style="background:var(--brand-purple-soft); color:var(--brand-purple);">🔖</div>
-              <div>
-                <div class="kpi-val">${st.bookmarksCount}</div>
-                <div class="kpi-lbl">Bookmarks →</div>
-              </div>
+          <!-- Quick Access Pastel Tiles -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header" style="margin-bottom:12px;">
+              <div class="card-title">⚡ Quick Access</div>
+            </div>
+            <div class="quick-grid-4">
+              <button class="quick-tile compact qt-blue" id="qa-browse-tests" type="button">
+                <div style="font-size:22px;">📄</div>
+                <h4>Test Library</h4>
+              </button>
+              <button class="quick-tile compact qt-green" id="qa-ai-import" type="button">
+                <div style="font-size:22px;">☁️</div>
+                <h4>Import PDF / AI</h4>
+              </button>
+              <button class="quick-tile compact qt-purple" id="qa-manage-diagrams" type="button">
+                <div style="font-size:22px;">🖼️</div>
+                <h4>Manage Diagrams</h4>
+              </button>
+              <button class="quick-tile compact qt-amber" type="button" onclick="EF.navigate('analytics')">
+                <div style="font-size:22px;">📊</div>
+                <h4>View Analytics</h4>
+              </button>
             </div>
           </div>
 
-          <!-- Middle Row: Performance Chart | Quick Actions | Recent Activity -->
-          <div class="dash-mid-grid">
+          <!-- Warm Parchment Verse of the Day Banner -->
+          <div class="votd-top-banner">
+            <div class="votd-top-main">
+              <div class="votd-top-head">
+                <span class="votd-label">✦ Verse of the Day</span>
+                <span style="font-size:10.5px; padding:2px 8px; border-radius:99px;">Offline Ready</span>
+                <span class="votd-ref" style="margin-left:auto;">— ${EF.esc(verse.ref)}</span>
+              </div>
+              <div class="votd-top-quote">“${EF.esc(verse.text)}”</div>
+            </div>
+            <div class="votd-top-side">
+              ${EF.esc(verse.note)}
+            </div>
+          </div>
+
+          <!-- Charts & Activity Grid -->
+          <div class="dash-bot-grid" style="margin-bottom:16px;">
             <div class="card">
               <div class="card-header">
-                <div class="card-title">📊 Your Performance</div>
-                <select class="select" id="dash-att-limit" style="width:auto; padding:5px 10px; font-size:12px;">
+                <div class="card-title">📊 Score Progression</div>
+                <select class="select" id="dash-att-limit" style="width:auto; padding:5px 12px; font-size:12px; border-radius:99px;">
                   <option value="10" ${dashAttemptLimit === 10 ? "selected" : ""}>Last 10 Attempts</option>
                   <option value="20" ${dashAttemptLimit === 20 ? "selected" : ""}>Last 20 Attempts</option>
                   <option value="50" ${dashAttemptLimit === 50 ? "selected" : ""}>All Recent (50)</option>
@@ -5889,46 +6136,10 @@ ${coordsStr}
               <div style="height:220px; position:relative;">
                 <canvas id="dash-perf-chart"></canvas>
                 ${attempts.length === 0 ? `
-                  <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:rgba(255,255,255,0.02); pointer-events:none;">
-                    <div style="font-size:13px; color:var(--text-muted);">Complete your first mock test to see score & accuracy trends.</div>
+                  <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; pointer-events:none;">
+                    <div style="font-size:13px; color:var(--text-muted);">Complete your first mock test to see score &amp; accuracy trends.</div>
                   </div>
                 ` : ""}
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">⚡ Quick Actions</div>
-              </div>
-              <div class="quick-grid">
-                <button class="quick-tile qt-primary" id="qa-start-mock">
-                  <div style="font-size:20px;">▶</div>
-                  <div>
-                    <h4>Start a Mock Test</h4>
-                    <p>${latestTest ? EF.esc(latestTest.title.slice(0, 26)) : "Jump into exam mode →"}</p>
-                  </div>
-                </button>
-                <button class="quick-tile qt-blue" id="qa-ai-import">
-                  <div style="font-size:20px;">✨</div>
-                  <div>
-                    <h4>AI Prompt & Import</h4>
-                    <p>Extract JSON & crop diagrams →</p>
-                  </div>
-                </button>
-                <button class="quick-tile qt-green" id="qa-browse-tests">
-                  <div style="font-size:20px;">📚</div>
-                  <div>
-                    <h4>Browse My Tests</h4>
-                    <p>View collection & PDFs →</p>
-                  </div>
-                </button>
-                <button class="quick-tile qt-purple" id="qa-manage-diagrams">
-                  <div style="font-size:20px;">🖼️</div>
-                  <div>
-                    <h4>Manage Diagrams</h4>
-                    <p>Local WebP cache & Ctrl+V →</p>
-                  </div>
-                </button>
               </div>
             </div>
 
@@ -5955,7 +6166,7 @@ ${coordsStr}
             </div>
           </div>
 
-          <!-- Bottom Row: Subject-wise Accuracy | Your Progress (Proverbs 21:5) | Verse of the Day -->
+          <!-- Bottom Row: Subject-wise Accuracy | Your Progress -->
           <div class="dash-bot-grid">
             <div class="card">
               <div class="card-header">
@@ -5973,7 +6184,7 @@ ${coordsStr}
                   ${st.subjectBreakdown.length === 0
                     ? `<span style="color:var(--text-muted);">No attempt data yet.</span>`
                     : st.subjectBreakdown.slice(0, 4).map((s, idx) => {
-                        const palette = ["#2563EB", "#F59E0B", "#168A5C", "#6D4AFF"];
+                        const palette = ["#1668F3", "#12986B", "#724CF9", "#F59E0B"];
                         return `
                           <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                             <span style="display:flex; align-items:center; gap:7px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
@@ -6013,8 +6224,6 @@ ${coordsStr}
                 <div style="font-size:11.5px; font-weight:700; color:var(--brand-gold); margin-top:3px;">— Proverbs 21:5</div>
               </div>
             </div>
-
-
           </div>
         `;
 
@@ -6137,6 +6346,19 @@ ${coordsStr}
 
         // Aggregate section stats across selected attempt
         const secEntries = Object.entries(activeAtt.sectionStats || {});
+        const avgScore = attempts.length
+          ? (attempts.reduce((s, a) => s + Number(a.percentage || 0), 0) / attempts.length).toFixed(0)
+          : 0;
+        const avgAcc = attempts.length
+          ? (attempts.reduce((s, a) => s + Number(a.accuracy || 0), 0) / attempts.length).toFixed(0)
+          : 0;
+        const totalQsAll = attempts.reduce((s, a) => s + Number(a.totalQuestions || 0), 0);
+        const totalSecAll = attempts.reduce((s, a) => s + Number(a.totalTimeSec || 0), 0);
+        const avgMinPerQ = totalQsAll ? (totalSecAll / 60 / totalQsAll).toFixed(1) : "0.0";
+        const orderedAll = attempts.slice().reverse();
+        const impVal = orderedAll.length >= 2
+          ? Number((Number(orderedAll[orderedAll.length - 1].percentage || 0) - Number(orderedAll[0].percentage || 0)).toFixed(0))
+          : 0;
 
         container.innerHTML = `
           <div class="page-header">
@@ -6153,6 +6375,30 @@ ${coordsStr}
                 `).join("")}
               </select>
               <button class="btn btn-primary btn-sm" id="an-review-active">🔍 Review Solutions</button>
+            </div>
+          </div>
+
+          <!-- 4 Pastel Metric Cards (Matches Analytics Mockup) -->
+          <div class="an-kpi-grid">
+            <div class="an-kpi-card an-kpi-green">
+              <div class="an-kpi-icon" style="background:rgba(18,152,107,0.14); color:#12986B;">🏆</div>
+              <div class="an-kpi-val" style="color:#12986B;">${avgScore}%</div>
+              <div class="an-kpi-lbl">Avg Score</div>
+            </div>
+            <div class="an-kpi-card an-kpi-blue">
+              <div class="an-kpi-icon" style="background:rgba(22,104,243,0.14); color:#1668F3;">✓</div>
+              <div class="an-kpi-val">${avgAcc}%</div>
+              <div class="an-kpi-lbl">Accuracy</div>
+            </div>
+            <div class="an-kpi-card an-kpi-cool">
+              <div class="an-kpi-icon" style="background:rgba(22,104,243,0.12); color:#1668F3;">⏱️</div>
+              <div class="an-kpi-val">${avgMinPerQ} min</div>
+              <div class="an-kpi-lbl">Avg/Qs</div>
+            </div>
+            <div class="an-kpi-card an-kpi-mint">
+              <div class="an-kpi-icon" style="background:rgba(18,152,107,0.14); color:#12986B;">↗</div>
+              <div class="an-kpi-val" style="color:${impVal >= 0 ? "#12986B" : "var(--brand-red)"};">${impVal >= 0 ? "+" : ""}${impVal}%</div>
+              <div class="an-kpi-lbl">Improvement</div>
             </div>
           </div>
 
@@ -6346,14 +6592,18 @@ ${coordsStr}
                   const att = (s.correct || 0) + (s.wrong || 0);
                   return att ? Number(((s.correct / att) * 100).toFixed(1)) : 0;
                 }),
-                backgroundColor: "#168A5C",
-                borderRadius: 6
+                backgroundColor: secEntries.map((_, i) => ["#20B486", "#1F82FF", "#9B5CF6", "#F59E0B"][i % 4]),
+                borderRadius: { topLeft: 10, topRight: 10 },
+                maxBarThickness: 54
               },
               {
                 label: "Net Score %",
                 data: secEntries.map(([, s]) => s.maxScore ? Number(((Math.max(0, s.score) / s.maxScore) * 100).toFixed(1)) : 0),
-                backgroundColor: "#2563EB",
-                borderRadius: 6
+                backgroundColor: "rgba(22, 104, 243, 0.24)",
+                borderColor: "#1668F3",
+                borderWidth: 1.5,
+                borderRadius: { topLeft: 10, topRight: 10 },
+                maxBarThickness: 54
               }
             ]
           },
@@ -6364,7 +6614,7 @@ ${coordsStr}
               y: { min: 0, max: 100, ticks: { color: cCols.text, callback: (v) => `${v}%` }, grid: { color: cCols.grid } },
               x: { ticks: { color: cCols.text }, grid: { display: false } }
             },
-            plugins: { legend: { labels: { color: cCols.text } } }
+            plugins: { legend: { labels: { color: cCols.text, usePointStyle: true, boxWidth: 8 } } }
           }
         });
       };
@@ -6651,10 +6901,37 @@ ${coordsStr}
       EF.renderAbout = function () {
         const container = document.getElementById("view-about");
         container.innerHTML = `
-          <div class="page-header">
-            <div>
-              <h2>About ExamForge</h2>
-              <p>Prepare with purpose. Perform with faith. Excel with excellence.</p>
+          <div class="card" style="margin-bottom:18px;">
+            <div class="about-hero-head">
+              <div class="about-info-badge">i</div>
+              <div>
+                <h2 class="serif" style="font-size:26px; line-height:1.15;">About ExamForge</h2>
+                <p style="font-size:13.5px; color:var(--text-secondary); margin-top:4px;">
+                  A zero-cost, cloud-synced exam simulator built for engineering aspirants.
+                </p>
+              </div>
+            </div>
+
+            <div class="about-art-card">
+              <img src="assets/about-laptop-bible.jpg" alt="ExamForge Laptop and Scripture Illustration" onerror="this.style.display='none'" />
+            </div>
+
+            <p style="font-size:14.5px; line-height:1.7; color:var(--text-secondary);">
+              <strong style="color:var(--text-primary);">ExamForge</strong> is a lightweight static web application that helps you prepare for GATE, ESE, and other competitive exams with a distraction-free interface and powerful analytics.
+            </p>
+
+            <ul class="about-check-list">
+              <li><span class="about-check-dot">✓</span> Zero-Cost, Cloud-Synced Architecture</li>
+              <li><span class="about-check-dot">✓</span> Supports MCQ, MSQ &amp; NAT Questions</li>
+              <li><span class="about-check-dot">✓</span> PDF-to-Test Ingestion with Diagram Cropping</li>
+              <li><span class="about-check-dot">✓</span> Performance Analytics &amp; Smart Retest Modes</li>
+            </ul>
+
+            <div class="subtle-verse-banner" style="margin-bottom:0; justify-content:center; text-align:center; border-left:1px solid #ECD5A3;">
+              <div>
+                <em>“Commit to the Lord whatever you do, and He will establish your plans.”</em>
+                <span style="display:block; margin-top:5px;">— Proverbs 16:3</span>
+              </div>
             </div>
           </div>
 
@@ -6663,14 +6940,14 @@ ${coordsStr}
               <div class="card-header"><div class="card-title">🏗️ Zero-Cost Serverless Architecture</div></div>
               <ul style="padding-left:18px; line-height:1.85; font-size:13.5px; color:var(--text-secondary);">
                 <li><strong>Single-File Static Frontend:</strong> Runs directly on GitHub Pages with zero server bills.</li>
-                <li><strong>Firebase Auth & Firestore:</strong> Syncs lightweight JSON tests, dynamic section marking schemes, attempts, bookmarks, and <code>coordinates.json</code> across devices.</li>
+                <li><strong>Firebase Auth &amp; Firestore:</strong> Syncs lightweight JSON tests, dynamic section marking schemes, attempts, bookmarks, and <code>coordinates.json</code> across devices.</li>
                 <li><strong>Google Drive Vault (<code>drive.file</code>):</strong> Stores master PYQ PDFs cleanly without touching database storage caps.</li>
                 <li><strong>IndexedDB WebP Cache + PDF.js Auto-Crop:</strong> Caches cropped diagrams and image options locally for instant loading, with 1-click browser re-cropping when switching devices.</li>
               </ul>
             </div>
 
             <div class="card">
-              <div class="card-header"><div class="card-title">⌨️ Exam Workspace Ergonomics & Shortcuts</div></div>
+              <div class="card-header"><div class="card-title">⌨️ Exam Workspace Ergonomics &amp; Shortcuts</div></div>
               <div class="table-wrap">
                 <table>
                   <thead><tr><th>Action</th><th>Shortcut / Control</th></tr></thead>
@@ -6688,6 +6965,8 @@ ${coordsStr}
               </div>
             </div>
           </div>
+
+          <div class="about-scenic-footer" aria-hidden="true"></div>
         `;
       };
     })();
