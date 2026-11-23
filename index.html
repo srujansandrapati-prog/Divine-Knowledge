@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
@@ -1827,18 +1827,18 @@
     /* 3. DASHBOARD HERO BANNER — Sunrise Cross Picture + Golden Pill CTA */
     .hero-banner {
       background:
-        linear-gradient(92deg, rgba(224, 234, 252, 0.88) 0%, rgba(235, 238, 250, 0.56) 44%, rgba(255, 244, 220, 0.08) 74%, rgba(16, 32, 64, 0.14) 100%),
-        url('assets/hero-calvary.jpg') right center / cover no-repeat,
+        linear-gradient(92deg, rgba(224, 234, 252, 0.9) 0%, rgba(235, 238, 250, 0.54) 40%, rgba(255, 244, 220, 0.04) 70%, rgba(16, 32, 64, 0.08) 100%),
+        url('assets/hero-calvary.jpg') right 18% / cover no-repeat,
         linear-gradient(112deg, #CEDEF8 0%, #DFE0F4 35%, #F6D8B2 68%, #F4BC66 100%);
-      min-height: 235px;
-      grid-template-columns: 1.25fr 0.85fr;
-      padding: 30px 32px;
+      min-height: 245px;
+      grid-template-columns: 1fr;
+      padding: 30px 34px;
     }
     .hero-banner::before { display: none; }
     [data-theme="dark"] .hero-banner {
       background:
-        linear-gradient(92deg, rgba(9, 21, 46, 0.9) 0%, rgba(15, 34, 70, 0.62) 48%, rgba(15, 28, 56, 0.22) 100%),
-        url('assets/hero-calvary.jpg') right center / cover no-repeat,
+        linear-gradient(92deg, rgba(9, 21, 46, 0.9) 0%, rgba(15, 34, 70, 0.58) 45%, rgba(15, 28, 56, 0.16) 100%),
+        url('assets/hero-calvary.jpg') right 18% / cover no-repeat,
         linear-gradient(112deg, #0B1934 0%, #163062 48%, #3F3124 84%, #122446 100%);
     }
     .hero-cta-btn {
@@ -2051,6 +2051,15 @@
       .votd-top-banner::after { width: 42px; height: 36px; opacity: 0.4; }
       .sidebar-verse { margin-top: 8px; padding: 16px 12px 12px; }
       .about-scenic-footer { height: 120px; }
+    }
+    @media (max-height: 780px) and (min-width: 941px) {
+      .sidebar-header { padding: 14px 16px 12px; }
+      .sidebar-nav { padding: 10px 12px; gap: 3px; }
+      .nav-item { padding: 8px 16px; font-size: 13px; }
+      .nav-divider { margin: 5px 10px; }
+      .sidebar-footer { padding: 10px 13px 12px; }
+      .sidebar-verse { padding: 14px 12px 10px; margin-bottom: 10px; }
+      .sidebar-verse p { font-size: 11px; line-height: 1.45; }
     }
 </style>
 </head>
@@ -6024,13 +6033,6 @@ ${coordsStr}
                 <span>▶</span>
                 <span>Start a Mock Test →</span>
               </button>
-            </div>
-
-            <div class="hero-right">
-              <div class="hero-verse-card">
-                <div class="hero-verse">“I can do all things through Christ who strengthens me.”</div>
-                <span class="hero-verse-ref">— Philippians 4:13</span>
-              </div>
             </div>
           </div>
 
