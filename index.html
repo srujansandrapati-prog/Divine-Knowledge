@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zoraph — Test · Refine · Master</title>
+  <link rel="icon" type="image/jpeg" href="assets/zoraph-logo.jpg" />
 
   <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -31,7 +32,7 @@
 
 <style>
     /* =====================================================================
-       EXAMFORGE DESIGN SYSTEM — MOCKUP-MATCHED LIGHT + HARMONIZED DARK MODE
+       ZORAPH DESIGN SYSTEM — MOCKUP-MATCHED LIGHT + HARMONIZED DARK MODE
        ===================================================================== */
     :root {
       --bg-app: #EFF5FF;
@@ -190,6 +191,15 @@
     }
     .auth-brand svg {
       filter: drop-shadow(0 0 18px rgba(255, 212, 92, 0.55));
+    }
+    .auth-logo-img {
+      width: 100%;
+      max-width: 280px;
+      height: auto;
+      border-radius: 14px;
+      border: 1px solid rgba(252, 211, 77, 0.35);
+      box-shadow: 0 10px 28px rgba(4, 14, 38, 0.45);
+      display: block;
     }
     .auth-brand h1 {
       font-family: 'Merriweather', Georgia, serif;
@@ -487,6 +497,25 @@
     .sidebar.collapsed .nav-label,
     .sidebar.collapsed .sidebar-verse,
     .sidebar.collapsed .sidebar-version { display: none; }
+    .sidebar-logo-img {
+      width: 100%;
+      max-width: 215px;
+      height: auto;
+      margin-top: 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(252, 211, 77, 0.25);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+      display: block;
+      transition: var(--transition);
+    }
+    .sidebar.collapsed .sidebar-logo-img {
+      width: 46px;
+      height: 46px;
+      margin-top: 8px;
+      object-fit: cover;
+      object-position: 5% center;
+      border-radius: 12px;
+    }
 
     .sidebar-nav { padding: 16px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
     .nav-item {
@@ -2073,36 +2102,11 @@
       <div class="auth-hero">
         <div class="auth-hero-content">
           <div class="auth-brand">
-            <svg width="56" height="56" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-              <defs>
-                <radialGradient id="authLogoHalo" cx="50%" cy="34%" r="48%">
-                  <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.98" />
-                  <stop offset="55%" stop-color="#FCD34D" stop-opacity="0.45" />
-                  <stop offset="100%" stop-color="#FCD34D" stop-opacity="0" />
-                </radialGradient>
-                <linearGradient id="authLogoCross" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#FFFBEB" />
-                  <stop offset="100%" stop-color="#F59E0B" />
-                </linearGradient>
-              </defs>
-              <circle cx="32" cy="22" r="22" fill="url(#authLogoHalo)" />
-              <g stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round" opacity="0.85">
-                <line x1="32" y1="3" x2="32" y2="7" />
-                <line x1="17" y1="9" x2="20" y2="12" />
-                <line x1="47" y1="9" x2="44" y2="12" />
-                <line x1="11" y1="21" x2="15" y2="21" />
-                <line x1="53" y1="21" x2="49" y2="21" />
-              </g>
-              <rect x="29.5" y="9" width="5" height="31" rx="1.4" fill="url(#authLogoCross)" />
-              <rect x="20" y="16.5" width="24" height="4.8" rx="1.4" fill="url(#authLogoCross)" />
-              <path d="M8 49C16 45 24 45.5 32 51C40 45.5 48 45 56 49V35.5C48 31.8 40 32.2 32 37.5C24 32.2 16 31.8 8 35.5V49Z" fill="rgba(255,255,255,0.16)" stroke="#FFFFFF" stroke-width="2.3" stroke-linejoin="round" />
-              <path d="M32 37.5V51" stroke="#FCD34D" stroke-width="1.8" />
-              <path d="M13 39.5C18 37.8 23 38 27.5 40.2M13 43.5C18 41.8 23 42 27.5 44.2M51 39.5C46 37.8 41 38 36.5 40.2M51 43.5C46 41.8 41 42 36.5 44.2" stroke="#E0EEFF" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-            <div>
-              <h1>ExamForge</h1>
-              <div style="font-size:12.5px; color:#E8F1FF; letter-spacing:0.04em; margin-top:2px;">Prepare · Perform · Excel</div>
-            </div>
+            <img
+              src="assets/zoraph-logo.jpg"
+              alt="Zoraph — Test · Refine · Master"
+              class="auth-logo-img"
+            />
           </div>
         </div>
 
@@ -2175,37 +2179,11 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div class="brand-logo-wrap">
-          <!-- Ornate Open Scripture & Radiating Cross Logo -->
-          <svg width="48" height="48" viewBox="0 0 64 64" fill="none" aria-label="ExamForge Logo">
-            <defs>
-              <radialGradient id="sbLogoHalo" cx="50%" cy="34%" r="46%">
-                <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.95" />
-                <stop offset="55%" stop-color="#FCD34D" stop-opacity="0.38" />
-                <stop offset="100%" stop-color="#FCD34D" stop-opacity="0" />
-              </radialGradient>
-              <linearGradient id="sbLogoCross" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#FFFFFF" />
-                <stop offset="100%" stop-color="#FCD34D" />
-              </linearGradient>
-            </defs>
-            <circle cx="32" cy="22" r="21" fill="url(#sbLogoHalo)" />
-            <g stroke="#FDE68A" stroke-width="1.5" stroke-linecap="round" opacity="0.8">
-              <line x1="32" y1="3" x2="32" y2="7" />
-              <line x1="17" y1="9" x2="20" y2="12" />
-              <line x1="47" y1="9" x2="44" y2="12" />
-              <line x1="11" y1="21" x2="15" y2="21" />
-              <line x1="53" y1="21" x2="49" y2="21" />
-            </g>
-            <rect x="29.5" y="9" width="5" height="29" rx="1.4" fill="url(#sbLogoCross)" />
-            <rect x="20" y="16.5" width="24" height="4.6" rx="1.4" fill="url(#sbLogoCross)" />
-            <path d="M8 48C16 44 24 44.5 32 50C40 44.5 48 44 56 48V34.5C48 30.8 40 31.2 32 36.5C24 31.2 16 30.8 8 34.5V48Z" fill="rgba(255,255,255,0.12)" stroke="#E8F1FF" stroke-width="2.2" stroke-linejoin="round" />
-            <path d="M32 36.5V50" stroke="#FCD34D" stroke-width="1.8" />
-            <path d="M13 38.5C18 36.8 23 37 27.5 39.2M13 42.5C18 40.8 23 41 27.5 43.2M51 38.5C46 36.8 41 37 36.5 39.2M51 42.5C46 40.8 41 41 36.5 43.2" stroke="#93C5FD" stroke-width="1.4" stroke-linecap="round" />
-            <path d="M30 49.5L28 57L32 54.5L36 57L34 49.5" fill="#F59E0B" />
-            <path d="M10 52C17.5 49 24.5 49.5 32 54C39.5 49.5 46.5 49 54 52" stroke="#7FB1FF" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
-          <div class="brand-title">ExamForge</div>
-          <div class="brand-sub">Prepare · Perform · Excel</div>
+          <img
+            src="assets/zoraph-logo.jpg"
+            alt="Zoraph — Test · Refine · Master"
+            class="sidebar-logo-img"
+          />
         </div>
       </div>
 
@@ -2294,7 +2272,7 @@
           </button>
 
           <div class="user-chip" id="user-chip">
-            <div class="user-avatar" id="user-avatar">EF</div>
+            <div class="user-avatar" id="user-avatar">Z</div>
             <span class="user-name" id="user-name">User</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
 
@@ -2696,7 +2674,7 @@
     }
 
     /* -----------------------------------------------------------------
-       GLOBAL EXAMFORGE CONTROLLER (window.EF)
+       GLOBAL ZORAPH CONTROLLER (window.EF)
        ----------------------------------------------------------------- */
     const EF = {
       auth, db, ImageDB, DriveAPI, autoCropPdfWithCoordinates, DAILY_VERSES,
@@ -3170,7 +3148,7 @@
         document.getElementById("app-shell").classList.remove("hidden");
 
         const displayName = user.displayName || (user.email ? user.email.split("@")[0] : "Guest");
-        const initials = displayName.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "EF";
+        const initials = displayName.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "Z";
         document.getElementById("user-avatar").textContent = initials;
         document.getElementById("user-name").textContent = displayName;
         document.getElementById("dd-user-name").textContent = displayName;
@@ -3353,7 +3331,7 @@
 You are a senior engineering exam digitization specialist (GATE, UPSC ESE, TSPSC) and strict JSON compiler.
 
 ### INSTRUCTIONS
-Extract every question, shared reading passage, option, final answer, and step-by-step explanation from the attached PYQ question paper (and answer key/solutions if provided) into ONE valid, strictly formatted JSON object compatible with ExamForge.
+Extract every question, shared reading passage, option, final answer, and step-by-step explanation from the attached PYQ question paper (and answer key/solutions if provided) into ONE valid, strictly formatted JSON object compatible with Zoraph.
 
 ### CONTEXT
 - Engineering questions contain mathematical equations, electrical/mechanical units, multi-column text, linked passages, diagrams, and image-based options.
@@ -3417,7 +3395,7 @@ Extract every question, shared reading passage, option, final answer, and step-b
    - Image options: put "[IMG:q{id}_optA]", "[IMG:q{id}_optB]", "[IMG:q{id}_optC]", "[IMG:q{id}_optD]" directly inside the "options" array (append any text label after the token if present).
    - Shared passage diagram: insert [IMG:p{n}] and repeat the same passage_id and passage text on every dependent question.
    - Explanation diagram: insert [IMG:q{id}_exp].
-5. MARKS GROUP: Tag each question's "marks_group" as "1M", "2M", or "Standard" based on the paper's mark tier so ExamForge can assign section-wise positive/negative marking automatically.
+5. MARKS GROUP: Tag each question's "marks_group" as "1M", "2M", or "Standard" based on the paper's mark tier so Zoraph can assign section-wise positive/negative marking automatically.
 6. COMPLETENESS: Do not skip, summarize, or truncate any question. Solve and write a crisp technical explanation for every question if solutions are not provided in the PDF.
 7. TABLES (MATCH-THE-FOLLOWING / DATA / TRUTH TABLES): Format every table inside "question", "passage", or "explanation" as a valid GitHub-Flavored Markdown table separated by \n newlines (e.g., "| List I | List II |\n|---|---|\n| P. Item | 1. Value |"). Never use spaces or tabs to align columns.
 
@@ -3434,14 +3412,14 @@ You are a precision document computer-vision engineer using Python (PyMuPDF / fi
 Inspect the attached PYQ PDF and (if provided) the extracted questions JSON. Write and run a Python script to:
 1. Render every PDF page containing figures at high resolution (250–300 DPI).
 2. Accurately crop EVERY question diagram, image-based option (A/B/C/D), passage figure, and solution diagram with a clean ~8px white margin and zero overlapping surrounding text.
-3. Save all cropped figures as crisp PNG files inside a single downloadable ZIP archive named: examforge_diagrams.zip
+3. Save all cropped figures as crisp PNG files inside a single downloadable ZIP archive named: zoraph_diagrams.zip
 4. Simultaneously generate and provide a downloadable file named: coordinates.json containing the exact page number (1-based) and normalized 0–1000 bounding box [x1, y1, x2, y2] for every cropped image.
 
 ### CONTEXT
-ExamForge caches the cropped images locally in the browser (IndexedDB) and saves only the lightweight coordinates.json + master PDF in Google Drive so switching devices can automatically re-crop the exact same figures without using cloud database storage.
+Zoraph caches the cropped images locally in the browser (IndexedDB) and saves only the lightweight coordinates.json + master PDF in Google Drive so switching devices can automatically re-crop the exact same figures without using cloud database storage.
 
 ### STRICT FILENAME & KEY NAMING CONVENTION
-Every PNG filename inside examforge_diagrams.zip AND every key inside coordinates.json MUST match the [IMG:key] tokens from Prompt 1:
+Every PNG filename inside zoraph_diagrams.zip AND every key inside coordinates.json MUST match the [IMG:key] tokens from Prompt 1:
 - Main question diagram -> q{id}.png   (key: "q{id}", e.g., "q12")
 - Extra diagram in same question -> q{id}_2.png (key: "q12_2")
 - Image options -> q{id}_optA.png, q{id}_optB.png, q{id}_optC.png, q{id}_optD.png
@@ -3463,12 +3441,12 @@ Every PNG filename inside examforge_diagrams.zip AND every key inside coordinate
    x1 = int(left / page_width * 1000), y1 = int(top / page_height * 1000),
    x2 = int(right / page_width * 1000), y2 = int(bottom / page_height * 1000).
 2. Visually verify cropped bounding boxes before zipping so circuit labels, axes, and option symbols are never clipped.
-3. Place all PNGs directly at the root of examforge_diagrams.zip (flat structure, no nested subfolders).
+3. Place all PNGs directly at the root of zoraph_diagrams.zip (flat structure, no nested subfolders).
 4. Keep background clean white (#FFFFFF) for transparent/vector PDF drawings.
 
 ### OUTPUT FORMAT
 Provide direct download links for BOTH files:
-1. examforge_diagrams.zip
+1. zoraph_diagrams.zip
 2. coordinates.json
 Followed by a concise checklist table mapping each key -> page number -> status.`;
 
@@ -3481,10 +3459,10 @@ Followed by a concise checklist table mapping each key -> page number -> status.
       EF.getRecropPrompt = (test) => {
         const coordsStr = JSON.stringify(test.coordinates || {}, null, 2);
         return `### ROLE
-You are a Python PDF-cropping assistant restoring cached exam diagrams for ExamForge.
+You are a Python PDF-cropping assistant restoring cached exam diagrams for Zoraph.
 
 ### INSTRUCTIONS
-Using the attached PYQ PDF and the exact normalized (0–1000) bounding-box coordinates below, run Python (PyMuPDF/fitz) to render each referenced page at 250 DPI, crop each [x1, y1, x2, y2] box, save each as <key>.png (white background), and bundle them into one downloadable ZIP file named: examforge_diagrams.zip.
+Using the attached PYQ PDF and the exact normalized (0–1000) bounding-box coordinates below, run Python (PyMuPDF/fitz) to render each referenced page at 250 DPI, crop each [x1, y1, x2, y2] box, save each as <key>.png (white background), and bundle them into one downloadable ZIP file named: zoraph_diagrams.zip.
 
 ### COORDINATES (page is 1-based; bbox is [x1, y1, x2, y2] normalized 0..1000)
 \`\`\`json
@@ -3493,8 +3471,8 @@ ${coordsStr}
 
 ### CONSTRAINTS
 - Do NOT alter filenames or keys.
-- Place all PNG files directly at the root of examforge_diagrams.zip.
-- Provide the download link for examforge_diagrams.zip immediately.`;
+- Place all PNG files directly at the root of zoraph_diagrams.zip.
+- Provide the download link for zoraph_diagrams.zip immediately.`;
       };
 
       /* -----------------------------------------------------------------
@@ -3833,7 +3811,7 @@ ${coordsStr}
                 <button class="btn btn-navy btn-sm" id="btn-copy-prompt-2">📋 Copy Prompt 2</button>
               </div>
               <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:10px;">
-                Gives you <code>examforge_diagrams.zip</code> (cached locally in IndexedDB) + optional <code>coordinates.json</code> (saved to Drive/Firestore for instant cross-device re-cropping).
+                Gives you <code>zoraph_diagrams.zip</code> (cached locally in IndexedDB) + optional <code>coordinates.json</code> (saved to Drive/Firestore for instant cross-device re-cropping).
               </p>
               <div class="prompt-box">${EF.esc(PROMPT_2_CROP)}</div>
             </div>
@@ -3921,7 +3899,7 @@ ${coordsStr}
                 </div>
               </div>
               <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:12px;">
-                ExamForge scanned your JSON and grouped questions by <strong>Section + Type (MCQ/MSQ/NAT) + Marks Tier</strong>. Customize positive and negative marks below:
+                Zoraph scanned your JSON and grouped questions by <strong>Section + Type (MCQ/MSQ/NAT) + Marks Tier</strong>. Customize positive and negative marks below:
               </p>
               <div class="table-wrap">
                 <table>
@@ -3969,7 +3947,7 @@ ${coordsStr}
               <div class="dropzone" id="imp-img-dropzone">
                 <input type="file" id="imp-img-input" accept=".zip,image/png,image/jpeg,image/webp,image/svg+xml" multiple class="hidden" />
                 <div style="font-size:24px; margin-bottom:6px;">🗜️ 🖼️</div>
-                <div style="font-weight:700; font-size:13.5px;">Drop <code>examforge_diagrams.zip</code> or PNG/WebP images here</div>
+                <div style="font-weight:700; font-size:13.5px;">Drop <code>zoraph_diagrams.zip</code> or PNG/WebP images here</div>
                 <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
                   Auto-matches <code>q12.png</code>, image options <code>q12_optA.png</code>, <code>q12_exp.png</code>, <code>p1.png</code>. Saved ONLY in local IndexedDB (0 KB Firebase storage).
                 </div>
@@ -4842,7 +4820,7 @@ ${coordsStr}
             </div>
             <div class="dropzone" id="rec-zip-drop" style="padding:12px;">
               <input type="file" id="rec-zip-input" accept=".zip,image/*" multiple class="hidden" />
-              <div style="font-size:12.5px; font-weight:600;">Drop re-cropped <code>examforge_diagrams.zip</code> or PNG/WebP files here</div>
+              <div style="font-size:12.5px; font-weight:600;">Drop re-cropped <code>zoraph_diagrams.zip</code> or PNG/WebP files here</div>
             </div>
           </div>
 
@@ -6906,7 +6884,7 @@ ${coordsStr}
           const u = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = u;
-          a.download = `ExamForge_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+          a.download = `Zoraph_Backup_${new Date().toISOString().slice(0, 10)}.json`;
           a.click();
           setTimeout(() => URL.revokeObjectURL(u), 4000);
         });
@@ -6948,7 +6926,7 @@ ${coordsStr}
             <div class="about-hero-head">
               <div class="about-info-badge">i</div>
               <div>
-                <h2 class="serif" style="font-size:26px; line-height:1.15;">About ExamForge</h2>
+                <h2 class="serif" style="font-size:26px; line-height:1.15;">About Zoraph</h2>
                 <p style="font-size:13.5px; color:var(--text-secondary); margin-top:4px;">
                   A zero-cost, cloud-synced exam simulator built for engineering aspirants.
                 </p>
@@ -6956,11 +6934,11 @@ ${coordsStr}
             </div>
 
             <div class="about-art-card">
-              <img src="assets/about-laptop-bible.jpg" alt="ExamForge Laptop and Scripture Illustration" onerror="this.style.display='none'" />
+              <img src="assets/about-laptop-bible.jpg" alt="Zoraph Laptop and Scripture Illustration" onerror="this.style.display='none'" />
             </div>
 
             <p style="font-size:14.5px; line-height:1.7; color:var(--text-secondary);">
-              <strong style="color:var(--text-primary);">ExamForge</strong> is a lightweight static web application that helps you prepare for GATE, ESE, and other competitive exams with a distraction-free interface and powerful analytics.
+              <strong style="color:var(--text-primary);">Zoraph</strong> is a lightweight static web application that helps you prepare for GATE, ESE, and other competitive exams with a distraction-free interface and powerful analytics.
             </p>
 
             <ul class="about-check-list">
