@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta id="ef-viewport" name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ExamForge — Engineering Exam Simulator</title>
 
   <!-- Typography -->
@@ -139,22 +139,34 @@
     }
     .auth-hero {
       position: relative;
-      padding: 40px 36px;
-      background: linear-gradient(165deg, #102142 0%, #1F3E77 56%, #E5A65E 125%);
+      padding: 34px 32px;
+      background:
+        radial-gradient(circle at 50% 62%, rgba(252, 206, 126, 0.34), transparent 56%),
+        linear-gradient(168deg, #0D1B38 0%, #173061 55%, #2B4C84 100%);
       color: #FFFFFF;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 500px;
+      gap: 18px;
+      min-height: 520px;
       overflow: hidden;
     }
-    .auth-hero-svg {
-      position: absolute;
-      inset: 0;
+    .auth-scene-box {
+      position: relative;
+      z-index: 2;
       width: 100%;
-      height: 100%;
-      pointer-events: none;
-      opacity: 0.92;
+      max-width: 360px;
+      margin: 0 auto;
+      border-radius: 14px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255, 240, 204, 0.14) 0%, rgba(13, 27, 56, 0.28) 100%);
+      border: 1px solid rgba(252, 213, 150, 0.22);
+      box-shadow: 0 10px 26px rgba(6, 14, 30, 0.24);
+    }
+    .auth-scene-box svg {
+      display: block;
+      width: 100%;
+      height: auto;
     }
     .auth-hero-content { position: relative; z-index: 2; }
     .auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
@@ -500,42 +512,103 @@
     }
     .card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
 
-    /* Dashboard Sunrise & Cross Hero Banner */
+    /* Dashboard Sunrise & Cross Hero Banner (Never-Cropped Responsive Composition) */
     .hero-banner {
       position: relative;
       border-radius: var(--radius-lg);
       overflow: hidden;
-      padding: 28px 32px;
+      padding: 22px 26px;
       margin-bottom: 18px;
-      min-height: 168px;
       display: grid;
-      grid-template-columns: 1.35fr 0.65fr 1fr;
+      grid-template-columns: minmax(210px, 1.2fr) minmax(200px, 0.95fr) minmax(220px, 1.05fr);
       align-items: center;
-      gap: 16px;
-      background: linear-gradient(110deg, #EBF2FC 0%, #F4ECDF 48%, #FBE0AF 72%, #DCE6F7 100%);
-      border: 1px solid #D5E2F5;
-      box-shadow: var(--shadow-sm);
+      gap: 20px;
+      background:
+        radial-gradient(circle at 52% 80%, rgba(253, 212, 134, 0.58), transparent 46%),
+        linear-gradient(118deg, #EBF2FC 0%, #F7F1E6 48%, #FCE4B8 74%, #E4EEFB 100%);
+      border: 1px solid #D4E1F4;
+      box-shadow: 0 6px 20px rgba(15, 29, 58, 0.06);
       color: #14223B;
     }
     [data-theme="dark"] .hero-banner {
-      background: linear-gradient(110deg, #152544 0%, #24365A 52%, #473A2C 78%, #18294A 100%);
-      border-color: #2B3F66;
+      background:
+        radial-gradient(circle at 52% 80%, rgba(236, 169, 76, 0.24), transparent 48%),
+        linear-gradient(118deg, #11203D 0%, #1D3158 48%, #3B322C 76%, #142443 100%);
+      border-color: #2A3F66;
       color: #F2F6FC;
     }
-    .hero-bg-art { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-    .hero-left, .hero-right { position: relative; z-index: 2; }
-    .hero-title { font-family: 'Merriweather', Georgia, serif; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+    .hero-left { position: relative; z-index: 2; }
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #9A6114;
+      background: rgba(255, 250, 240, 0.78);
+      border: 1px solid rgba(217, 138, 27, 0.26);
+      padding: 3px 10px;
+      border-radius: 99px;
+      margin-bottom: 8px;
+    }
+    [data-theme="dark"] .hero-kicker {
+      color: #FCD596;
+      background: rgba(217, 138, 27, 0.16);
+      border-color: rgba(252, 213, 150, 0.28);
+    }
+    .hero-title { font-family: 'Merriweather', Georgia, serif; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; }
     .hero-title span { color: #2563EB; }
     [data-theme="dark"] .hero-title span { color: #60A5FA; }
-    .hero-subtitle { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 16px; margin-top: 6px; color: #1E3762; }
+    .hero-subtitle { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 15px; margin-top: 5px; color: #1E3762; }
     [data-theme="dark"] .hero-subtitle { color: #D5E3FA; }
-    .hero-tagline { font-size: 13px; margin-top: 8px; color: #43577A; font-weight: 500; }
+    .hero-tagline { font-size: 12.5px; margin-top: 8px; color: #43577A; font-weight: 500; line-height: 1.45; }
     [data-theme="dark"] .hero-tagline { color: #B4C6E3; }
-    .hero-right { text-align: right; }
-    .hero-verse { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 15.5px; line-height: 1.55; color: #172744; font-weight: 700; }
+
+    /* Self-contained Sunrise & Cross Scenic Frame — 100% Visible on Every Screen */
+    .hero-scene {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(217, 138, 27, 0.24);
+      box-shadow: 0 8px 20px rgba(15, 29, 58, 0.10);
+      background: linear-gradient(180deg, #E8F0FC 0%, #FDE7BF 62%, #192E54 100%);
+    }
+    [data-theme="dark"] .hero-scene {
+      border-color: rgba(252, 213, 150, 0.24);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34);
+    }
+    .hero-scene svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .hero-right {
+      position: relative;
+      z-index: 2;
+      text-align: right;
+      background: rgba(255, 255, 255, 0.62);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(217, 138, 27, 0.24);
+      border-radius: 14px;
+      padding: 15px 18px;
+    }
+    [data-theme="dark"] .hero-right {
+      background: rgba(15, 29, 58, 0.56);
+      border-color: rgba(252, 213, 150, 0.22);
+    }
+    .hero-verse-mark { font-size: 12px; color: #C88424; margin-bottom: 4px; display: block; }
+    [data-theme="dark"] .hero-verse-mark { color: #FCD596; }
+    .hero-verse { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.5px; line-height: 1.58; color: #172744; font-weight: 700; }
     [data-theme="dark"] .hero-verse { color: #FFF5E4; }
-    .hero-verse-ref { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: #3D5275; }
-    [data-theme="dark"] .hero-verse-ref { color: #F8C97F; }
+    .hero-verse-ref { display: block; margin-top: 7px; font-size: 12px; font-weight: 700; color: #9A6114; }
+    [data-theme="dark"] .hero-verse-ref { color: #FCD596; }
 
     /* KPI Strip (5 Cards) */
     .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 18px; }
@@ -583,9 +656,11 @@
     .quick-tile h4 { font-size: 13.5px; font-weight: 700; margin-top: 8px; }
     .quick-tile p { font-size: 11.5px; opacity: 0.85; margin-top: 2px; }
 
-    /* Verse of the Day Card */
+    /* Verse of the Day Card (Peaceful Dawn Theme — Never Clips) */
     .votd-card {
-      background: linear-gradient(145deg, #132549 0%, #1F3E77 56%, #8C6239 125%);
+      background:
+        radial-gradient(circle at 86% 14%, rgba(252, 213, 150, 0.28), transparent 46%),
+        linear-gradient(150deg, #0F1E3C 0%, #1A366A 58%, #6D4E32 130%);
       color: #FFFFFF;
       border-radius: var(--radius-md);
       padding: 20px 22px;
@@ -594,12 +669,25 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      border: none;
+      border: 1px solid rgba(252, 213, 150, 0.22);
+      box-shadow: var(--shadow-sm);
     }
+    .votd-horizon {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 54px;
+      width: 100%;
+      pointer-events: none;
+      opacity: 0.32;
+      z-index: 0;
+    }
+    .votd-card > *:not(.votd-horizon) { position: relative; z-index: 1; }
     .votd-label { font-size: 10.5px; letter-spacing: 0.12em; font-weight: 700; color: #FCD596; text-transform: uppercase; }
-    .votd-quote { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.5px; line-height: 1.6; margin: 10px 0 6px; color: #FFF9EF; }
+    .votd-quote { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.2px; line-height: 1.62; margin: 11px 0 7px; color: #FFF9EF; }
     .votd-ref { font-size: 12px; font-weight: 700; color: #FCD596; }
-    .votd-note { font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 10px; line-height: 1.5; border-top: 1px solid rgba(255, 255, 255, 0.16); padding-top: 10px; }
+    .votd-note { font-size: 12px; color: rgba(255, 255, 255, 0.86); margin-top: 12px; line-height: 1.5; border-top: 1px solid rgba(252, 213, 150, 0.22); padding-top: 10px; }
 
     /* Activity List */
     .activity-list { display: flex; flex-direction: column; gap: 10px; max-height: 235px; overflow-y: auto; }
@@ -619,7 +707,7 @@
     .page-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
     .page-header p { font-size: 13.5px; color: var(--text-secondary); margin-top: 3px; }
     .subtle-verse-banner {
-      background: var(--bg-surface);
+      background: linear-gradient(90deg, rgba(254, 244, 226, 0.65) 0%, var(--bg-surface) 65%);
       border: 1px solid var(--border-color);
       border-left: 4px solid var(--brand-gold);
       border-radius: 12px;
@@ -628,10 +716,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px 16px;
       flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
     }
-    .subtle-verse-banner em { font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; color: var(--text-primary); }
+    [data-theme="dark"] .subtle-verse-banner {
+      background: linear-gradient(90deg, rgba(217, 138, 27, 0.14) 0%, var(--bg-surface) 68%);
+    }
+    .subtle-verse-banner em { font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; line-height: 1.5; color: var(--text-primary); }
     .subtle-verse-banner span { font-size: 12px; font-weight: 700; color: var(--brand-gold); white-space: nowrap; }
 
     /* Importer & Prompt Studio */
@@ -939,10 +1031,9 @@
     .toast.error { border-left-color: #EF4444; }
 
     /* =====================================================================
-       OVERFLOW PROTECTION, QUESTION TABLES & DESKTOP MODE TOGGLE
+       OVERFLOW PROTECTION & RESPONSIVE QUESTION TABLES
        ===================================================================== */
-    html:not(.desktop-mode),
-    html:not(.desktop-mode) body {
+    html, body {
       overflow-x: hidden;
       max-width: 100%;
     }
@@ -1015,28 +1106,35 @@
       z-index: 35;
     }
     #mobile-sidebar-backdrop.show { display: block; }
-
-    /* Desktop Mode Active Indicator */
-    .desktop-mode .btn-desktop-toggle {
-      background: var(--brand-blue-soft);
-      color: var(--brand-blue);
-      border-color: var(--brand-blue);
-    }
     .exam-palette-toggle-btn { display: none; }
 
     /* =====================================================================
-       RESPONSIVE BREAKPOINTS (MOBILE FIT)
+       RESPONSIVE BREAKPOINTS
+       - >= 900px: Full Desktop & Chrome "Desktop site" (~980px) Layout
+       - <= 899px: Clean Zero-Overflow Mobile Fit with Uncropped Artwork
        ===================================================================== */
-    @media (max-width: 1180px) {
-      .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .dash-mid-grid, .dash-bot-grid { grid-template-columns: 1fr 1fr; }
-      .hero-banner { grid-template-columns: 1fr; text-align: left; }
-      .hero-right { text-align: left; }
+    @media (max-width: 1200px) and (min-width: 900px) {
+      :root { --sidebar-w: 214px; }
+      .content-wrap { padding: 18px 16px 30px; }
+      .hero-banner { padding: 18px 20px; gap: 14px; grid-template-columns: 1.15fr 0.9fr 1fr; }
+      .hero-title { font-size: 26px; }
+      .hero-subtitle { font-size: 13.5px; }
+      .hero-verse { font-size: 13px; }
+      .hero-right { padding: 12px 14px; }
+      .kpi-grid { gap: 10px; }
+      .kpi-card { padding: 12px 10px; gap: 9px; }
+      .kpi-icon { width: 36px; height: 36px; font-size: 17px; }
+      .kpi-val { font-size: 17px; }
+      .kpi-lbl { font-size: 11px; }
+      .dash-mid-grid { grid-template-columns: 1.25fr 1fr 0.85fr; gap: 12px; }
+      .dash-bot-grid { grid-template-columns: 1fr 1fr 1.1fr; gap: 12px; }
     }
-    @media (max-width: 900px) {
-      .auth-card { grid-template-columns: 1fr; }
-      .auth-hero { min-height: 220px; padding: 24px 20px; }
-      .auth-form-pane { padding: 24px 20px; }
+    @media (max-width: 899px) {
+      #auth-screen { padding: 14px; }
+      .auth-card { grid-template-columns: 1fr; border-radius: 18px; }
+      .auth-hero { min-height: auto; padding: 22px 18px; gap: 14px; }
+      .auth-brand { margin-bottom: 10px; }
+      .auth-form-pane { padding: 24px 18px; }
 
       .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); box-shadow: var(--shadow-lg); }
       .sidebar.mobile-open { transform: translateX(0); }
@@ -1047,7 +1145,7 @@
       .search-box { padding: 7px 11px; min-width: 0; }
       .search-kbd { display: none; }
       .topbar-right { gap: 6px; flex-shrink: 0; }
-      .sync-pill { padding: 6px 8px; }
+      .sync-pill { padding: 6px 9px; }
       #sync-status-text { display: none; }
       #drive-status-label { display: none; }
       .user-name { display: none; }
@@ -1057,21 +1155,32 @@
       .card { padding: 14px 13px; }
       .page-header h2 { font-size: 19px; }
 
-      .hero-banner { padding: 18px 16px; min-height: auto; gap: 10px; }
-      .hero-title { font-size: 26px; }
+      /* Mobile Hero Banner: Centered Title + Full Uncropped Sunrise/Cross Scene + Verse */
+      .hero-banner {
+        grid-template-columns: 1fr;
+        padding: 18px 15px;
+        gap: 14px;
+        text-align: center;
+      }
+      .hero-kicker { margin: 0 auto 8px; }
+      .hero-title { font-size: 27px; }
       .hero-subtitle { font-size: 14px; }
+      .hero-tagline { font-size: 12px; }
+      .hero-scene { max-width: 100%; }
+      .hero-right { text-align: center; padding: 13px 14px; }
       .hero-verse { font-size: 13.5px; }
 
       .grid-2, .dash-mid-grid, .dash-bot-grid { grid-template-columns: 1fr; gap: 12px; }
       .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .kpi-card { padding: 11px 10px; gap: 9px; }
-      .kpi-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
-      .kpi-val { font-size: 17px; }
-      .kpi-lbl { font-size: 11px; }
+      .kpi-card { padding: 12px 11px; gap: 10px; }
+      .kpi-card:last-child { grid-column: 1 / -1; }
+      .kpi-icon { width: 38px; height: 38px; font-size: 17px; border-radius: 10px; }
+      .kpi-val { font-size: 18px; }
+      .kpi-lbl { font-size: 11.5px; }
 
       .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-      .quick-tile { padding: 12px 10px; min-height: 88px; }
-      .quick-tile h4 { font-size: 12.5px; }
+      .quick-tile { padding: 13px 11px; min-height: 92px; }
+      .quick-tile h4 { font-size: 12.8px; }
       .quick-tile p { font-size: 11px; }
 
       .modal-backdrop { padding: 10px; }
@@ -1079,7 +1188,7 @@
 
       /* Mobile Distraction-Free Exam Workspace */
       .exam-topbar { height: auto; min-height: 52px; padding: 8px 10px; gap: 8px; flex-wrap: wrap; }
-      .exam-topbar strong { max-width: 170px !important; font-size: 13.5px !important; }
+      .exam-topbar strong { max-width: 175px !important; font-size: 13.5px !important; }
       .exam-timer { font-size: 13.5px; padding: 5px 9px; }
       .exam-section-bar { padding: 6px 10px; }
       .exam-body { grid-template-columns: 1fr; }
@@ -1102,8 +1211,7 @@
       .exam-footer { height: auto; min-height: 54px; padding: 8px 10px; flex-wrap: wrap; gap: 8px; }
       .exam-footer .btn { padding: 7px 10px; font-size: 12px; }
     }
-    @media (max-width: 520px) {
-      .btn-desktop-label { display: none; }
+    @media (max-width: 420px) {
       .quick-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -1116,44 +1224,67 @@
   <div id="auth-screen">
     <div class="auth-card">
       <div class="auth-hero">
-        <!-- Subtle Sunrise & Cross Artwork -->
-        <svg class="auth-hero-svg" viewBox="0 0 460 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <defs>
-            <radialGradient id="authSun" cx="76%" cy="56%" r="52%">
-              <stop offset="0%" stop-color="#FFE6A7" stop-opacity="0.95" />
-              <stop offset="45%" stop-color="#F6B76A" stop-opacity="0.45" />
-              <stop offset="100%" stop-color="#1A3A73" stop-opacity="0" />
-            </radialGradient>
-          </defs>
-          <rect width="460" height="520" fill="url(#authSun)" />
-          <path d="M0 390 Q120 330 260 365 T460 350 L460 520 L0 520 Z" fill="#0E1C38" opacity="0.58" />
-          <path d="M0 430 Q170 385 320 420 T460 398 L460 520 L0 520 Z" fill="#0B162C" opacity="0.82" />
-          <!-- Minimal Cross Silhouette on Ridge -->
-          <g fill="#2C1D13" opacity="0.82" transform="translate(345, 250)">
-            <rect x="-4" y="0" width="8" height="92" rx="2" />
-            <rect x="-26" y="20" width="52" height="7" rx="2" />
-          </g>
-        </svg>
-
         <div class="auth-hero-content">
           <div class="auth-brand">
-            <svg width="42" height="42" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-              <rect x="22" y="5" width="4" height="22" rx="1.5" fill="#FCD596" />
-              <rect x="14" y="11" width="20" height="4" rx="1.5" fill="#FCD596" />
-              <path d="M8 34C14 31 19 31 24 35C29 31 34 31 40 34V24C34 21 29 21 24 25C19 21 14 21 8 24V34Z" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round" />
-              <path d="M10 38C15 35.5 20 36 24 39C28 36 33 35.5 38 38" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" />
+            <svg width="44" height="44" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+              <circle cx="24" cy="14" r="11" fill="rgba(252,213,150,0.18)" />
+              <rect x="22.2" y="4.5" width="3.6" height="20.5" rx="1.4" fill="#FCD596" />
+              <rect x="15.5" y="10" width="17" height="3.5" rx="1.4" fill="#FCD596" />
+              <path d="M8 35C13.5 32 19 32 24 35.8C29 32 34.5 32 40 35V24.5C34.5 21.5 29 21.8 24 25.5C19 21.8 13.5 21.5 8 24.5V35Z" stroke="#FFFFFF" stroke-width="2.2" stroke-linejoin="round" fill="rgba(255,255,255,0.08)" />
+              <path d="M10.5 39C15.2 36.8 19.6 37 24 39.8C28.4 37 32.8 36.8 37.5 39" stroke="#93C5FD" stroke-width="1.9" stroke-linecap="round" />
             </svg>
             <div>
               <h1>ExamForge</h1>
-              <div style="font-size:11.5px; color:#FCD596; letter-spacing:0.06em;">ENGINEERING MOCK SIMULATOR</div>
+              <div style="font-size:11px; color:#FCD596; letter-spacing:0.08em; font-weight:600;">ENGINEERING MOCK SIMULATOR</div>
             </div>
           </div>
           <p class="auth-tagline">
             Prepare with purpose. Perform with faith. Excel with excellence.
           </p>
-          <p style="font-size:12.5px; color:rgba(255,255,255,0.74); margin-top:12px; max-width:320px; line-height:1.6;">
+          <p style="font-size:12.5px; color:rgba(255,255,255,0.76); margin-top:10px; max-width:340px; line-height:1.58;">
             Zero-cost, cloud-synced exam simulation for GATE, UPSC ESE, and technical exams — built for focus, accuracy, and peace of mind.
           </p>
+        </div>
+
+        <!-- Framed Sunrise & Cross Scene (100% Uncropped on Mobile & Laptop) -->
+        <div class="auth-scene-box" aria-hidden="true">
+          <svg viewBox="0 0 360 150" preserveAspectRatio="xMidYMax meet">
+            <defs>
+              <linearGradient id="authSkyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#173161" />
+                <stop offset="52%" stop-color="#355586" />
+                <stop offset="82%" stop-color="#F2B872" />
+                <stop offset="100%" stop-color="#FDE3AD" />
+              </linearGradient>
+              <radialGradient id="authSunGlow" cx="50%" cy="68%" r="44%">
+                <stop offset="0%" stop-color="#FFF9DF" stop-opacity="0.98" />
+                <stop offset="42%" stop-color="#FBD07C" stop-opacity="0.72" />
+                <stop offset="100%" stop-color="#FBD07C" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <rect width="360" height="150" fill="url(#authSkyGrad)" />
+            <rect width="360" height="150" fill="url(#authSunGlow)" />
+            <!-- Soft Sunrise Rays -->
+            <g stroke="#FFF6D6" stroke-width="1.2" opacity="0.28">
+              <line x1="180" y1="102" x2="95" y2="28" />
+              <line x1="180" y1="102" x2="138" y2="14" />
+              <line x1="180" y1="102" x2="180" y2="8" />
+              <line x1="180" y1="102" x2="222" y2="14" />
+              <line x1="180" y1="102" x2="265" y2="28" />
+            </g>
+            <!-- Rising Sun Disc -->
+            <circle cx="180" cy="102" r="28" fill="#FFF4C9" opacity="0.92" />
+            <!-- Distant Mountain Ridges -->
+            <path d="M0 120 Q72 86 146 106 T286 96 L360 112 L360 150 L0 150 Z" fill="#233C68" opacity="0.62" />
+            <path d="M0 132 Q95 96 180 112 T360 122 L360 150 L0 150 Z" fill="#132444" opacity="0.88" />
+            <!-- Foreground Hilltop Supporting Cross -->
+            <path d="M55 150 Q180 92 305 150 Z" fill="#0B162D" />
+            <!-- Centered Hilltop Cross Silhouette (Always Full & Uncropped) -->
+            <g transform="translate(180, 34)" fill="#182238" stroke="#FCE2AC" stroke-opacity="0.38" stroke-width="0.9">
+              <rect x="-3.4" y="0" width="6.8" height="82" rx="1.6" />
+              <rect x="-24" y="18" width="48" height="6.4" rx="1.6" />
+            </g>
+          </svg>
         </div>
 
         <div class="auth-verse-box">
@@ -1222,11 +1353,12 @@
         </button>
         <div class="brand-logo-wrap">
           <!-- Minimal Bible + Cross Logo -->
-          <svg width="44" height="44" viewBox="0 0 48 48" fill="none" aria-label="ExamForge Logo">
-            <rect x="22" y="4" width="4" height="21" rx="1.4" fill="#FFFFFF" />
-            <rect x="14.5" y="10" width="19" height="3.8" rx="1.4" fill="#FFFFFF" />
-            <path d="M7 35C13 31.8 18.8 32 24 36C29.2 32 35 31.8 41 35V24.5C35 21.5 29.2 21.8 24 25.6C18.8 21.8 13 21.5 7 24.5V35Z" stroke="#E2ECFF" stroke-width="2.3" stroke-linejoin="round" fill="rgba(255,255,255,0.08)" />
-            <path d="M9.5 39C14.8 36.6 19.6 37 24 40C28.4 37 33.2 36.6 38.5 39" stroke="#7FB1FF" stroke-width="2" stroke-linecap="round" />
+          <svg width="46" height="46" viewBox="0 0 48 48" fill="none" aria-label="ExamForge Logo">
+            <circle cx="24" cy="14" r="12" fill="rgba(252,213,150,0.16)" />
+            <rect x="22.1" y="4" width="3.8" height="20.5" rx="1.4" fill="#FCD596" />
+            <rect x="15" y="9.8" width="18" height="3.6" rx="1.4" fill="#FCD596" />
+            <path d="M7.5 35C13.2 31.8 18.8 32 24 35.8C29.2 32 34.8 31.8 40.5 35V24.5C34.8 21.5 29.2 21.8 24 25.6C18.8 21.8 13.2 21.5 7.5 24.5V35Z" stroke="#EBF2FF" stroke-width="2.2" stroke-linejoin="round" fill="rgba(255,255,255,0.10)" />
+            <path d="M10 39.2C15 36.8 19.6 37.1 24 40C28.4 37.1 33 36.8 38 39.2" stroke="#7FB1FF" stroke-width="1.9" stroke-linecap="round" />
           </svg>
           <div class="brand-title">ExamForge</div>
           <div class="brand-sub">Prepare · Perform · Excel</div>
@@ -1313,11 +1445,6 @@
             <span id="drive-status-label">Drive</span>
           </button>
 
-          <button class="btn btn-outline btn-sm btn-desktop-toggle" id="btn-desktop-mode" title="Toggle Desktop / Mobile View">
-            <span id="desktop-mode-icon">🖥️</span>
-            <span class="btn-desktop-label" id="desktop-mode-label">Desktop</span>
-          </button>
-
           <div class="user-chip" id="user-chip">
             <div class="user-avatar" id="user-avatar">EF</div>
             <span class="user-name" id="user-name">User</span>
@@ -1330,7 +1457,6 @@
               </div>
               <button class="dropdown-btn" id="dd-sync-now" type="button">🔄 Force Cloud Sync</button>
               <button class="dropdown-btn" id="dd-connect-drive" type="button">☁️ Connect Google Drive</button>
-              <button class="dropdown-btn" id="dd-desktop-mode" type="button">🖥️ Switch Desktop / Mobile Mode</button>
               <button class="dropdown-btn" id="dd-settings" type="button">⚙️ Settings & Cache</button>
               <button class="dropdown-btn danger" id="dd-logout" type="button">🚪 Sign Out</button>
             </div>
@@ -1932,35 +2058,6 @@
         return html;
       },
 
-      applyDesktopMode(enabled) {
-        const vp = document.getElementById("ef-viewport");
-        const isOn = Boolean(enabled);
-        document.documentElement.classList.toggle("desktop-mode", isOn);
-        localStorage.setItem("ef_desktop_mode", isOn ? "1" : "0");
-        if (vp) {
-          vp.setAttribute(
-            "content",
-            isOn
-              ? "width=1280, initial-scale=0.35, minimum-scale=0.25, maximum-scale=3.0, user-scalable=yes"
-              : "width=device-width, initial-scale=1.0"
-          );
-        }
-        const icon = document.getElementById("desktop-mode-icon");
-        const lbl = document.getElementById("desktop-mode-label");
-        if (icon) icon.textContent = isOn ? "📱" : "🖥️";
-        if (lbl) lbl.textContent = isOn ? "Mobile Fit" : "Desktop";
-
-        document.getElementById("sidebar")?.classList.remove("mobile-open");
-        document.getElementById("mobile-sidebar-backdrop")?.classList.remove("show");
-      },
-
-      toggleDesktopMode() {
-        const next = !document.documentElement.classList.contains("desktop-mode");
-        this.applyDesktopMode(next);
-        this.toast(next ? "Desktop Mode enabled (1280px layout — pinch to zoom)." : "Mobile Fit Mode enabled.", "info");
-        setTimeout(() => window.dispatchEvent(new Event("resize")), 120);
-      },
-
       revokeTempUrls() {
         this._blobUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
         this._blobUrls = [];
@@ -2310,8 +2407,6 @@
           sidebarEl.classList.remove("mobile-open");
           sbBackdrop.classList.remove("show");
         });
-        document.getElementById("btn-desktop-mode")?.addEventListener("click", () => this.toggleDesktopMode());
-        document.getElementById("dd-desktop-mode")?.addEventListener("click", () => this.toggleDesktopMode());
 
         document.getElementById("btn-theme-toggle").addEventListener("click", () => {
           const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
@@ -2370,7 +2465,6 @@
 
       init() {
         this.applyTheme(this.state.settings.theme || "light");
-        this.applyDesktopMode(localStorage.getItem("ef_desktop_mode") === "1");
         this.bindCoreEvents();
 
         if (localStorage.getItem("ef_guest_mode") === "1") {
@@ -3961,11 +4055,11 @@ ${coordsStr}
           </div>
 
           <!-- Pre-Test Faith-Inspired Encouragement (Joshua 1:9) -->
-          <div style="padding:14px 16px; border-radius:12px; background:linear-gradient(125deg, #132549, #1E3E78); color:#FFFFFF; margin-bottom:16px;">
-            <p class="serif" style="font-style:italic; font-size:14.5px; line-height:1.55; color:#FFF7E8;">
-              “Be strong and courageous. Do not be afraid.”
+          <div style="padding:15px 18px; border-radius:13px; background:radial-gradient(circle at 88% 20%, rgba(252,213,150,0.28), transparent 46%), linear-gradient(125deg, #0F1E3C, #1C3A70); border:1px solid rgba(252,213,150,0.25); color:#FFFFFF; margin-bottom:16px;">
+            <p class="serif" style="font-style:italic; font-size:14.5px; line-height:1.58; color:#FFF8EB;">
+              ✦ “Be strong and courageous. Do not be afraid.”
             </p>
-            <div style="font-size:12px; font-weight:700; color:#FCD596; margin-top:4px;">— Joshua 1:9</div>
+            <div style="font-size:12px; font-weight:700; color:#FCD596; margin-top:5px;">— Joshua 1:9</div>
           </div>
 
           <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; text-align:center;">
@@ -4407,9 +4501,6 @@ ${coordsStr}
             </div>
 
             <div style="display:flex; align-items:center; gap:10px;">
-              <button class="btn btn-outline btn-sm btn-desktop-toggle" id="ex-desktop-toggle" title="Toggle Desktop / Mobile Layout">
-                ${document.documentElement.classList.contains("desktop-mode") ? "📱" : "🖥️"}
-              </button>
               <button class="btn btn-outline btn-sm exam-palette-toggle-btn" id="ex-toggle-palette">Palette</button>
               ${exam.reviewMode ? `
                 <span class="badge badge-green" style="font-size:12.5px; padding:5px 10px;">
@@ -4583,13 +4674,9 @@ ${coordsStr}
           </div>
         `;
 
-        // Responsive palette toggle & Desktop Mode switch inside Exam Workspace
+        // Responsive palette toggle inside Exam Workspace
         document.getElementById("ex-toggle-palette")?.addEventListener("click", () => {
           document.getElementById("exam-palette-pane")?.classList.toggle("mobile-show");
-        });
-        document.getElementById("ex-desktop-toggle")?.addEventListener("click", () => {
-          EF.toggleDesktopMode();
-          renderExamWorkspace();
         });
 
         // Typeset MathJax inside question container
@@ -5081,37 +5168,57 @@ ${coordsStr}
         const latestTest = EF.state.tests[0] || null;
 
         container.innerHTML = `
-          <!-- Sunrise & Cross Hero Banner (Philippians 4:13) -->
+          <!-- Sunrise & Cross Hero Banner (Philippians 4:13 — 100% Responsive, Never Cropped) -->
           <div class="hero-banner">
-            <svg class="hero-bg-art" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              <defs>
-                <radialGradient id="dashSunrise" cx="67%" cy="68%" r="42%">
-                  <stop offset="0%" stop-color="#FFF5C8" stop-opacity="0.96"/>
-                  <stop offset="40%" stop-color="#F8C87A" stop-opacity="0.58"/>
-                  <stop offset="100%" stop-color="#E8F0FC" stop-opacity="0"/>
-                </radialGradient>
-              </defs>
-              <rect width="1200" height="220" fill="url(#dashSunrise)" />
-              <!-- Soft distant hills -->
-              <path d="M480 220 Q620 155 760 176 T1040 165 L1200 185 L1200 220 Z" fill="#6B83A8" opacity="0.22" />
-              <path d="M560 220 Q720 135 880 185 T1200 160 L1200 220 Z" fill="#1D335B" opacity="0.48" />
-              <path d="M620 220 Q780 150 930 202 L1200 190 L1200 220 Z" fill="#122240" opacity="0.72" />
-              <!-- Subtle Silhouette Cross on Hilltop -->
-              <g transform="translate(808, 42)" fill="#4A331C" opacity="0.88">
-                <rect x="-4.5" y="0" width="9" height="122" rx="2"/>
-                <rect x="-32" y="25" width="64" height="8.5" rx="2"/>
-              </g>
-            </svg>
-
             <div class="hero-left">
+              <span class="hero-kicker">✦ Faith-Inspired Engineering Prep</span>
               <div class="hero-title">Exam<span>Forge</span></div>
               <div class="hero-subtitle">Your Personal Engineering Exam Simulator</div>
               <div class="hero-tagline">Prepare with purpose. Perform with faith. Excel with excellence.</div>
             </div>
 
-            <div></div>
+            <!-- Dedicated Framed Sunrise & Cross Artwork (Scales Proportionally on Mobile & Desktop) -->
+            <div class="hero-scene" aria-hidden="true">
+              <svg viewBox="0 0 360 168" preserveAspectRatio="xMidYMax meet">
+                <defs>
+                  <linearGradient id="dashSkyGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#DCE9FB" />
+                    <stop offset="44%" stop-color="#F7EBD5" />
+                    <stop offset="78%" stop-color="#FBD594" />
+                    <stop offset="100%" stop-color="#F2B96E" />
+                  </linearGradient>
+                  <radialGradient id="dashSunHalo" cx="50%" cy="66%" r="48%">
+                    <stop offset="0%" stop-color="#FFFDF0" stop-opacity="0.98" />
+                    <stop offset="38%" stop-color="#FFE09C" stop-opacity="0.78" />
+                    <stop offset="100%" stop-color="#FFE09C" stop-opacity="0" />
+                  </radialGradient>
+                </defs>
+                <rect width="360" height="168" fill="url(#dashSkyGrad)" />
+                <rect width="360" height="168" fill="url(#dashSunHalo)" />
+                <!-- Gentle Dawn Rays -->
+                <g stroke="#FFFFFF" stroke-width="1.4" opacity="0.45">
+                  <line x1="180" y1="112" x2="82" y2="30" />
+                  <line x1="180" y1="112" x2="132" y2="14" />
+                  <line x1="180" y1="112" x2="180" y2="8" />
+                  <line x1="180" y1="112" x2="228" y2="14" />
+                  <line x1="180" y1="112" x2="278" y2="30" />
+                </g>
+                <!-- Glowing Dawn Sun -->
+                <circle cx="180" cy="112" r="32" fill="#FFF9DE" opacity="0.95" />
+                <!-- Layered Distant & Foreground Hills -->
+                <path d="M0 132 Q74 96 148 116 T292 106 L360 124 L360 168 L0 168 Z" fill="#4E6B96" opacity="0.42" />
+                <path d="M0 144 Q98 106 184 124 T360 134 L360 168 L0 168 Z" fill="#223A64" opacity="0.78" />
+                <path d="M52 168 Q180 104 308 168 Z" fill="#132342" />
+                <!-- Centered Hilltop Cross (Full, Crisp & Never Cut Off) -->
+                <g transform="translate(180, 34)" fill="#2B1E14" stroke="#FFF4D1" stroke-opacity="0.45" stroke-width="0.9">
+                  <rect x="-3.8" y="0" width="7.6" height="92" rx="1.8" />
+                  <rect x="-27" y="20" width="54" height="7" rx="1.8" />
+                </g>
+              </svg>
+            </div>
 
             <div class="hero-right">
+              <span class="hero-verse-mark">✦</span>
               <div class="hero-verse">“I can do all things through Christ who strengthens me.”</div>
               <span class="hero-verse-ref">— Philippians 4:13</span>
             </div>
@@ -5306,10 +5413,14 @@ ${coordsStr}
 
             <!-- Offline Rotating Verse of the Day Card -->
             <div class="votd-card">
+              <svg class="votd-horizon" viewBox="0 0 360 54" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 38 Q90 12 180 30 T360 22 L360 54 L0 54 Z" fill="#FCD596" opacity="0.28" />
+                <path d="M0 46 Q120 26 240 40 T360 34 L360 54 L0 54 Z" fill="#0B162C" opacity="0.65" />
+              </svg>
               <div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                   <span class="votd-label">✦ Verse of the Day</span>
-                  <span style="font-size:10.5px; color:rgba(255,255,255,0.65);">Offline Ready</span>
+                  <span style="font-size:10.5px; color:rgba(255,255,255,0.72); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:99px;">Offline Ready</span>
                 </div>
                 <div class="votd-quote">“${EF.esc(verse.text)}”</div>
                 <div class="votd-ref">— ${EF.esc(verse.ref)}</div>
@@ -5997,5 +6108,4 @@ ${coordsStr}
     EF.init();
   </script>
 </body>
-</html>
-
+  </html>
