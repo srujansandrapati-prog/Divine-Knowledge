@@ -139,34 +139,24 @@
     }
     .auth-hero {
       position: relative;
-      padding: 34px 32px;
-      background:
-        radial-gradient(circle at 50% 62%, rgba(252, 206, 126, 0.34), transparent 56%),
-        linear-gradient(168deg, #0D1B38 0%, #173061 55%, #2B4C84 100%);
+      padding: 40px 36px;
+      background: linear-gradient(165deg, #102142 0%, #1F3E77 56%, #E5A65E 125%);
       color: #FFFFFF;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 18px;
-      min-height: 520px;
+      min-height: 500px;
       overflow: hidden;
     }
-    .auth-scene-box {
-      position: relative;
-      z-index: 2;
+    .auth-hero-svg {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
       width: 100%;
-      max-width: 360px;
-      margin: 0 auto;
-      border-radius: 14px;
-      overflow: hidden;
-      background: linear-gradient(180deg, rgba(255, 240, 204, 0.14) 0%, rgba(13, 27, 56, 0.28) 100%);
-      border: 1px solid rgba(252, 213, 150, 0.22);
-      box-shadow: 0 10px 26px rgba(6, 14, 30, 0.24);
-    }
-    .auth-scene-box svg {
-      display: block;
-      width: 100%;
-      height: auto;
+      height: 68%;
+      pointer-events: none;
+      opacity: 0.96;
     }
     .auth-hero-content { position: relative; z-index: 2; }
     .auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
@@ -289,6 +279,8 @@
       position: sticky;
       top: 0;
       height: 100vh;
+      height: 100dvh;
+      max-height: 100dvh;
       transition: width var(--transition), transform var(--transition);
       z-index: 40;
       overflow-y: auto;
@@ -512,33 +504,34 @@
     }
     .card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
 
-    /* Dashboard Sunrise & Cross Hero Banner (Never-Cropped Responsive Composition) */
+    /* Dashboard Sunrise & Calvary Cross Hero Banner (Zero-Clip Responsive Art) */
     .hero-banner {
       position: relative;
       border-radius: var(--radius-lg);
       overflow: hidden;
-      padding: 22px 26px;
-      margin-bottom: 18px;
+      padding: 22px 28px;
+      margin-bottom: 14px;
+      min-height: 184px;
       display: grid;
-      grid-template-columns: minmax(210px, 1.2fr) minmax(200px, 0.95fr) minmax(220px, 1.05fr);
+      grid-template-columns: 1.2fr 1.05fr 1fr;
       align-items: center;
-      gap: 20px;
+      gap: 16px;
       background:
-        radial-gradient(circle at 52% 80%, rgba(253, 212, 134, 0.58), transparent 46%),
-        linear-gradient(118deg, #EBF2FC 0%, #F7F1E6 48%, #FCE4B8 74%, #E4EEFB 100%);
-      border: 1px solid #D4E1F4;
-      box-shadow: 0 6px 20px rgba(15, 29, 58, 0.06);
+        radial-gradient(circle at 54% 85%, rgba(253, 224, 141, 0.72), transparent 46%),
+        linear-gradient(115deg, #E8F1FD 0%, #F7EFE2 50%, #FBE2B4 78%, #DDE8FA 100%);
+      border: 1px solid #D3E1F5;
+      box-shadow: var(--shadow-sm);
       color: #14223B;
     }
     [data-theme="dark"] .hero-banner {
       background:
-        radial-gradient(circle at 52% 80%, rgba(236, 169, 76, 0.24), transparent 48%),
-        linear-gradient(118deg, #11203D 0%, #1D3158 48%, #3B322C 76%, #142443 100%);
-      border-color: #2A3F66;
+        radial-gradient(circle at 54% 85%, rgba(217, 138, 27, 0.28), transparent 48%),
+        linear-gradient(115deg, #101D38 0%, #1C3159 52%, #3B2E22 80%, #142546 100%);
+      border-color: #2B3F66;
       color: #F2F6FC;
     }
-    .hero-left { position: relative; z-index: 2; }
-    .hero-kicker {
+    .hero-left, .hero-right { position: relative; z-index: 2; }
+    .hero-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -546,69 +539,91 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #9A6114;
-      background: rgba(255, 250, 240, 0.78);
-      border: 1px solid rgba(217, 138, 27, 0.26);
-      padding: 3px 10px;
+      color: #9A5B13;
+      background: rgba(255, 248, 232, 0.85);
+      border: 1px solid rgba(217, 138, 27, 0.32);
+      padding: 4px 10px;
       border-radius: 99px;
-      margin-bottom: 8px;
+      margin-bottom: 9px;
     }
-    [data-theme="dark"] .hero-kicker {
-      color: #FCD596;
+    [data-theme="dark"] .hero-pill {
       background: rgba(217, 138, 27, 0.16);
+      color: #FCD596;
       border-color: rgba(252, 213, 150, 0.28);
     }
-    .hero-title { font-family: 'Merriweather', Georgia, serif; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; }
+    .hero-title { font-family: 'Merriweather', Georgia, serif; font-size: 33px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
     .hero-title span { color: #2563EB; }
     [data-theme="dark"] .hero-title span { color: #60A5FA; }
-    .hero-subtitle { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 15px; margin-top: 5px; color: #1E3762; }
+    .hero-subtitle { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 15.5px; margin-top: 6px; color: #1E3762; }
     [data-theme="dark"] .hero-subtitle { color: #D5E3FA; }
-    .hero-tagline { font-size: 12.5px; margin-top: 8px; color: #43577A; font-weight: 500; line-height: 1.45; }
+    .hero-tagline { font-size: 12.8px; margin-top: 7px; color: #43577A; font-weight: 600; }
     [data-theme="dark"] .hero-tagline { color: #B4C6E3; }
 
-    /* Self-contained Sunrise & Cross Scenic Frame — 100% Visible on Every Screen */
-    .hero-scene {
+    /* Dedicated Proportional Art Frame so Cross & Sun Never Clip */
+    .hero-art-stage {
       position: relative;
-      z-index: 2;
+      z-index: 1;
       width: 100%;
-      max-width: 340px;
+      max-width: 380px;
+      height: 168px;
       margin: 0 auto;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid rgba(217, 138, 27, 0.24);
-      box-shadow: 0 8px 20px rgba(15, 29, 58, 0.10);
-      background: linear-gradient(180deg, #E8F0FC 0%, #FDE7BF 62%, #192E54 100%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      pointer-events: none;
     }
-    [data-theme="dark"] .hero-scene {
-      border-color: rgba(252, 213, 150, 0.24);
-      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34);
-    }
-    .hero-scene svg {
-      display: block;
+    .hero-art-stage svg {
       width: 100%;
-      height: auto;
+      height: 100%;
+      display: block;
+      overflow: visible;
     }
 
-    .hero-right {
-      position: relative;
-      z-index: 2;
-      text-align: right;
+    .hero-right { text-align: right; }
+    .hero-verse-card {
+      display: inline-block;
       background: rgba(255, 255, 255, 0.62);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(217, 138, 27, 0.24);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(217, 138, 27, 0.28);
       border-radius: 14px;
-      padding: 15px 18px;
+      padding: 13px 16px;
     }
-    [data-theme="dark"] .hero-right {
-      background: rgba(15, 29, 58, 0.56);
+    [data-theme="dark"] .hero-verse-card {
+      background: rgba(15, 29, 58, 0.55);
       border-color: rgba(252, 213, 150, 0.22);
     }
-    .hero-verse-mark { font-size: 12px; color: #C88424; margin-bottom: 4px; display: block; }
-    [data-theme="dark"] .hero-verse-mark { color: #FCD596; }
-    .hero-verse { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.5px; line-height: 1.58; color: #172744; font-weight: 700; }
+    .hero-verse { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.5px; line-height: 1.55; color: #172744; font-weight: 700; }
     [data-theme="dark"] .hero-verse { color: #FFF5E4; }
-    .hero-verse-ref { display: block; margin-top: 7px; font-size: 12px; font-weight: 700; color: #9A6114; }
-    [data-theme="dark"] .hero-verse-ref { color: #FCD596; }
+    .hero-verse-ref { display: block; margin-top: 6px; font-size: 12px; font-weight: 700; color: #B46916; }
+    [data-theme="dark"] .hero-verse-ref { color: #F8C97F; }
+
+    /* Top Verse of the Day Spotlight Banner (Above Dashboard Grids) */
+    .votd-top-banner {
+      background: linear-gradient(120deg, #102042 0%, #1C386E 58%, #5E4326 125%);
+      color: #FFFFFF;
+      border-radius: var(--radius-md);
+      padding: 15px 22px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(252, 213, 150, 0.22);
+    }
+    .votd-top-main { flex: 1.5; min-width: 240px; }
+    .votd-top-head { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+    .votd-top-quote { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.5px; line-height: 1.55; color: #FFF9EF; }
+    .votd-top-side {
+      flex: 1;
+      min-width: 210px;
+      border-left: 1px solid rgba(255, 255, 255, 0.18);
+      padding-left: 18px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.86);
+    }
 
     /* KPI Strip (5 Cards) */
     .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 18px; }
@@ -632,7 +647,7 @@
 
     /* Dashboard Grids */
     .dash-mid-grid { display: grid; grid-template-columns: 1.55fr 1.05fr 0.85fr; gap: 16px; margin-bottom: 16px; }
-    .dash-bot-grid { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 16px; }
+    .dash-bot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
     .quick-tile {
       border-radius: 13px;
@@ -656,11 +671,9 @@
     .quick-tile h4 { font-size: 13.5px; font-weight: 700; margin-top: 8px; }
     .quick-tile p { font-size: 11.5px; opacity: 0.85; margin-top: 2px; }
 
-    /* Verse of the Day Card (Peaceful Dawn Theme — Never Clips) */
+    /* Verse of the Day Card */
     .votd-card {
-      background:
-        radial-gradient(circle at 86% 14%, rgba(252, 213, 150, 0.28), transparent 46%),
-        linear-gradient(150deg, #0F1E3C 0%, #1A366A 58%, #6D4E32 130%);
+      background: linear-gradient(145deg, #132549 0%, #1F3E77 56%, #8C6239 125%);
       color: #FFFFFF;
       border-radius: var(--radius-md);
       padding: 20px 22px;
@@ -669,25 +682,12 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      border: 1px solid rgba(252, 213, 150, 0.22);
-      box-shadow: var(--shadow-sm);
+      border: none;
     }
-    .votd-horizon {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 54px;
-      width: 100%;
-      pointer-events: none;
-      opacity: 0.32;
-      z-index: 0;
-    }
-    .votd-card > *:not(.votd-horizon) { position: relative; z-index: 1; }
     .votd-label { font-size: 10.5px; letter-spacing: 0.12em; font-weight: 700; color: #FCD596; text-transform: uppercase; }
-    .votd-quote { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.2px; line-height: 1.62; margin: 11px 0 7px; color: #FFF9EF; }
+    .votd-quote { font-family: 'Merriweather', Georgia, serif; font-style: italic; font-size: 14.5px; line-height: 1.6; margin: 10px 0 6px; color: #FFF9EF; }
     .votd-ref { font-size: 12px; font-weight: 700; color: #FCD596; }
-    .votd-note { font-size: 12px; color: rgba(255, 255, 255, 0.86); margin-top: 12px; line-height: 1.5; border-top: 1px solid rgba(252, 213, 150, 0.22); padding-top: 10px; }
+    .votd-note { font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 10px; line-height: 1.5; border-top: 1px solid rgba(255, 255, 255, 0.16); padding-top: 10px; }
 
     /* Activity List */
     .activity-list { display: flex; flex-direction: column; gap: 10px; max-height: 235px; overflow-y: auto; }
@@ -707,7 +707,7 @@
     .page-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
     .page-header p { font-size: 13.5px; color: var(--text-secondary); margin-top: 3px; }
     .subtle-verse-banner {
-      background: linear-gradient(90deg, rgba(254, 244, 226, 0.65) 0%, var(--bg-surface) 65%);
+      background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-left: 4px solid var(--brand-gold);
       border-radius: 12px;
@@ -716,14 +716,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px 16px;
+      gap: 12px;
       flex-wrap: wrap;
-      box-shadow: var(--shadow-sm);
     }
-    [data-theme="dark"] .subtle-verse-banner {
-      background: linear-gradient(90deg, rgba(217, 138, 27, 0.14) 0%, var(--bg-surface) 68%);
-    }
-    .subtle-verse-banner em { font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; line-height: 1.5; color: var(--text-primary); }
+    .subtle-verse-banner em { font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; color: var(--text-primary); }
     .subtle-verse-banner span { font-size: 12px; font-weight: 700; color: var(--brand-gold); white-space: nowrap; }
 
     /* Importer & Prompt Studio */
@@ -1031,7 +1027,9 @@
     .toast.error { border-left-color: #EF4444; }
 
     /* =====================================================================
-       OVERFLOW PROTECTION & RESPONSIVE QUESTION TABLES
+       OVERFLOW PROTECTION, QUESTION TABLES & RESPONSIVE LAYOUT
+       (Viewports >= 941px — including Chrome's native "Desktop site" at 980px —
+        automatically display the full multi-column desktop layout!)
        ===================================================================== */
     html, body {
       overflow-x: hidden;
@@ -1108,36 +1106,63 @@
     #mobile-sidebar-backdrop.show { display: block; }
     .exam-palette-toggle-btn { display: none; }
 
-    /* =====================================================================
-       RESPONSIVE BREAKPOINTS
-       - >= 900px: Full Desktop & Chrome "Desktop site" (~980px) Layout
-       - <= 899px: Clean Zero-Overflow Mobile Fit with Uncropped Artwork
-       ===================================================================== */
-    @media (max-width: 1200px) and (min-width: 900px) {
+    /* Slightly tighten 3-column gaps between 941px and 1180px (e.g. Chrome Desktop Site 980px) */
+    @media (min-width: 941px) and (max-width: 1180px) {
       :root { --sidebar-w: 214px; }
-      .content-wrap { padding: 18px 16px 30px; }
-      .hero-banner { padding: 18px 20px; gap: 14px; grid-template-columns: 1.15fr 0.9fr 1fr; }
-      .hero-title { font-size: 26px; }
-      .hero-subtitle { font-size: 13.5px; }
-      .hero-verse { font-size: 13px; }
-      .hero-right { padding: 12px 14px; }
+      .content-wrap { padding: 18px 16px 32px; }
+      .hero-banner { padding: 20px 20px; grid-template-columns: 1.15fr 1fr 1fr; gap: 12px; }
+      .hero-title { font-size: 28px; }
       .kpi-grid { gap: 10px; }
-      .kpi-card { padding: 12px 10px; gap: 9px; }
-      .kpi-icon { width: 36px; height: 36px; font-size: 17px; }
-      .kpi-val { font-size: 17px; }
-      .kpi-lbl { font-size: 11px; }
-      .dash-mid-grid { grid-template-columns: 1.25fr 1fr 0.85fr; gap: 12px; }
-      .dash-bot-grid { grid-template-columns: 1fr 1fr 1.1fr; gap: 12px; }
+      .kpi-card { padding: 12px 11px; gap: 9px; }
+      .kpi-val { font-size: 18px; }
+      .dash-mid-grid { grid-template-columns: 1.35fr 1.05fr 0.9fr; gap: 12px; }
     }
-    @media (max-width: 899px) {
-      #auth-screen { padding: 14px; }
-      .auth-card { grid-template-columns: 1fr; border-radius: 18px; }
-      .auth-hero { min-height: auto; padding: 22px 18px; gap: 14px; }
-      .auth-brand { margin-bottom: 10px; }
-      .auth-form-pane { padding: 24px 18px; }
 
-      .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); box-shadow: var(--shadow-lg); }
+    /* Mobile & Small Tablet Layout (<= 940px) */
+    @media (max-width: 940px) {
+      .auth-card { grid-template-columns: 1fr; }
+      .auth-hero { min-height: 295px; padding: 24px 20px; gap: 18px; }
+      .auth-form-pane { padding: 24px 20px; }
+
+      /* Mobile Navigation Drawer — Exact 100dvh fit so Light/Dark Theme toggle never gets cut off */
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        width: min(268px, 82vw);
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+      }
       .sidebar.mobile-open { transform: translateX(0); }
+      .sidebar-header { padding: 14px 14px 11px; flex-shrink: 0; }
+      .sidebar-collapse-btn { display: none; }
+      .brand-title { font-size: 18px; }
+      .sidebar-nav {
+        padding: 8px 10px;
+        gap: 2px;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .nav-item { padding: 8px 12px; font-size: 13px; }
+      .nav-divider { margin: 5px 10px; }
+      .sidebar-footer {
+        flex-shrink: 0;
+        padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+        background: rgba(10, 20, 42, 0.45);
+      }
+      .sidebar-verse { margin-bottom: 9px; }
+      .sidebar-verse-leaf { display: none; }
+      .sidebar-verse p { font-size: 11px; line-height: 1.42; }
+      .sidebar-verse span { margin-top: 3px; font-size: 10.5px; }
+      .theme-switch-row { margin-bottom: 4px; }
+
       .mobile-menu-btn { display: inline-flex; flex-shrink: 0; }
 
       .topbar { padding: 0 12px; gap: 8px; }
@@ -1145,7 +1170,7 @@
       .search-box { padding: 7px 11px; min-width: 0; }
       .search-kbd { display: none; }
       .topbar-right { gap: 6px; flex-shrink: 0; }
-      .sync-pill { padding: 6px 9px; }
+      .sync-pill { padding: 6px 8px; }
       #sync-status-text { display: none; }
       #drive-status-label { display: none; }
       .user-name { display: none; }
@@ -1155,32 +1180,35 @@
       .card { padding: 14px 13px; }
       .page-header h2 { font-size: 19px; }
 
-      /* Mobile Hero Banner: Centered Title + Full Uncropped Sunrise/Cross Scene + Verse */
+      /* Mobile Hero Banner — Stacks cleanly so full Calvary Cross & Sunrise are 100% visible */
       .hero-banner {
         grid-template-columns: 1fr;
-        padding: 18px 15px;
-        gap: 14px;
+        padding: 18px 16px;
+        min-height: auto;
+        gap: 12px;
         text-align: center;
       }
-      .hero-kicker { margin: 0 auto 8px; }
+      .hero-left { text-align: center; }
       .hero-title { font-size: 27px; }
       .hero-subtitle { font-size: 14px; }
-      .hero-tagline { font-size: 12px; }
-      .hero-scene { max-width: 100%; }
-      .hero-right { text-align: center; padding: 13px 14px; }
+      .hero-art-stage { height: 155px; max-width: 340px; }
+      .hero-right { text-align: center; }
+      .hero-verse-card { width: 100%; }
       .hero-verse { font-size: 13.5px; }
+
+      .votd-top-banner { padding: 14px 15px; gap: 10px; }
+      .votd-top-side { border-left: none; border-top: 1px solid rgba(255, 255, 255, 0.16); padding-left: 0; padding-top: 8px; }
 
       .grid-2, .dash-mid-grid, .dash-bot-grid { grid-template-columns: 1fr; gap: 12px; }
       .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .kpi-card { padding: 12px 11px; gap: 10px; }
-      .kpi-card:last-child { grid-column: 1 / -1; }
-      .kpi-icon { width: 38px; height: 38px; font-size: 17px; border-radius: 10px; }
-      .kpi-val { font-size: 18px; }
-      .kpi-lbl { font-size: 11.5px; }
+      .kpi-card { padding: 11px 10px; gap: 9px; }
+      .kpi-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
+      .kpi-val { font-size: 17px; }
+      .kpi-lbl { font-size: 11px; }
 
       .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-      .quick-tile { padding: 13px 11px; min-height: 92px; }
-      .quick-tile h4 { font-size: 12.8px; }
+      .quick-tile { padding: 12px 10px; min-height: 88px; }
+      .quick-tile h4 { font-size: 12.5px; }
       .quick-tile p { font-size: 11px; }
 
       .modal-backdrop { padding: 10px; }
@@ -1188,7 +1216,7 @@
 
       /* Mobile Distraction-Free Exam Workspace */
       .exam-topbar { height: auto; min-height: 52px; padding: 8px 10px; gap: 8px; flex-wrap: wrap; }
-      .exam-topbar strong { max-width: 175px !important; font-size: 13.5px !important; }
+      .exam-topbar strong { max-width: 170px !important; font-size: 13.5px !important; }
       .exam-timer { font-size: 13.5px; padding: 5px 9px; }
       .exam-section-bar { padding: 6px 10px; }
       .exam-body { grid-template-columns: 1fr; }
@@ -1224,67 +1252,101 @@
   <div id="auth-screen">
     <div class="auth-card">
       <div class="auth-hero">
+        <!-- High-Craft Calvary Sunrise & Cross Scene (Bottom-Anchored, Never Clipped) -->
+        <svg class="auth-hero-svg" viewBox="0 0 460 340" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+          <defs>
+            <radialGradient id="authSunGlow" cx="72%" cy="54%" r="54%">
+              <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.98" />
+              <stop offset="28%" stop-color="#FDE08D" stop-opacity="0.72" />
+              <stop offset="62%" stop-color="#F59E0B" stop-opacity="0.25" />
+              <stop offset="100%" stop-color="#102142" stop-opacity="0" />
+            </radialGradient>
+            <linearGradient id="authCrossBeam" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#1C1410" />
+              <stop offset="72%" stop-color="#382516" />
+              <stop offset="100%" stop-color="#FDE68A" />
+            </linearGradient>
+          </defs>
+          <rect width="460" height="340" fill="url(#authSunGlow)" />
+          <!-- Volumetric Dawn Rays -->
+          <g fill="#FFF7D6" opacity="0.14">
+            <polygon points="332,184 180,25 225,18" />
+            <polygon points="332,184 265,8 302,5" />
+            <polygon points="332,184 345,4 382,10" />
+            <polygon points="332,184 415,28 448,55" />
+            <polygon points="332,184 125,85 152,60" />
+          </g>
+          <!-- Glowing Sun Disc -->
+          <circle cx="332" cy="184" r="34" fill="#FFFDF5" opacity="0.92" />
+          <circle cx="332" cy="184" r="48" fill="#FDE08D" opacity="0.34" />
+          <!-- Distant Soaring Doves -->
+          <path d="M238 96 Q244 89 250 95 Q256 89 262 96 Q255 93 250 98 Q245 93 238 96 Z" fill="#FFF7D6" opacity="0.65" />
+          <path d="M266 78 Q270 73 275 77 Q280 73 284 78 Q279 76 275 80 Q271 76 266 78 Z" fill="#FFF7D6" opacity="0.5" />
+          <!-- Layered Mountain Silhouettes -->
+          <path d="M0 238 Q115 190 235 218 T460 198 L460 340 L0 340 Z" fill="#173263" opacity="0.55" />
+          <path d="M0 264 Q150 225 295 252 T460 224 L460 340 L0 340 Z" fill="#0F2144" opacity="0.82" />
+          <path d="M0 296 Q180 260 335 282 Q405 270 460 288 L460 340 L0 340 Z" fill="#091326" />
+          <!-- Golgotha Hill Crest & Rim-Lit Calvary Cross -->
+          <path d="M286 282 Q334 252 384 282 Z" fill="#091326" />
+          <g transform="translate(334, 134)">
+            <!-- Soft Golden Halo Behind Crossbar -->
+            <circle cx="0" cy="34" r="32" fill="#FFFBEB" opacity="0.22" />
+            <!-- Vertical Timber with Golden Rim Highlight -->
+            <rect x="-5" y="0" width="10" height="132" rx="1.8" fill="url(#authCrossBeam)" />
+            <!-- Horizontal Crossbar with Golden Rim Highlight -->
+            <rect x="-34" y="28" width="68" height="9" rx="1.8" fill="url(#authCrossBeam)" />
+            <!-- Stone Base -->
+            <path d="M-16 132 L-10 123 L10 123 L16 132 Z" fill="#160F0B" />
+          </g>
+        </svg>
+
         <div class="auth-hero-content">
           <div class="auth-brand">
-            <svg width="44" height="44" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-              <circle cx="24" cy="14" r="11" fill="rgba(252,213,150,0.18)" />
-              <rect x="22.2" y="4.5" width="3.6" height="20.5" rx="1.4" fill="#FCD596" />
-              <rect x="15.5" y="10" width="17" height="3.5" rx="1.4" fill="#FCD596" />
-              <path d="M8 35C13.5 32 19 32 24 35.8C29 32 34.5 32 40 35V24.5C34.5 21.5 29 21.8 24 25.5C19 21.8 13.5 21.5 8 24.5V35Z" stroke="#FFFFFF" stroke-width="2.2" stroke-linejoin="round" fill="rgba(255,255,255,0.08)" />
-              <path d="M10.5 39C15.2 36.8 19.6 37 24 39.8C28.4 37 32.8 36.8 37.5 39" stroke="#93C5FD" stroke-width="1.9" stroke-linecap="round" />
+            <!-- Ornate Open Scripture & Radiant Cross Emblem -->
+            <svg width="50" height="50" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+              <defs>
+                <radialGradient id="authLogoHalo" cx="50%" cy="34%" r="46%">
+                  <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.95" />
+                  <stop offset="55%" stop-color="#FCD34D" stop-opacity="0.4" />
+                  <stop offset="100%" stop-color="#FCD34D" stop-opacity="0" />
+                </radialGradient>
+                <linearGradient id="authLogoCross" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#FFFBEB" />
+                  <stop offset="100%" stop-color="#F59E0B" />
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="22" r="21" fill="url(#authLogoHalo)" />
+              <!-- Sunbeams -->
+              <g stroke="#FDE68A" stroke-width="1.5" stroke-linecap="round" opacity="0.78">
+                <line x1="32" y1="3" x2="32" y2="7" />
+                <line x1="17" y1="9" x2="20" y2="12" />
+                <line x1="47" y1="9" x2="44" y2="12" />
+                <line x1="11" y1="21" x2="15" y2="21" />
+                <line x1="53" y1="21" x2="49" y2="21" />
+              </g>
+              <!-- Beveled Cross -->
+              <rect x="29.5" y="9" width="5" height="29" rx="1.4" fill="url(#authLogoCross)" />
+              <rect x="20" y="16.5" width="24" height="4.6" rx="1.4" fill="url(#authLogoCross)" />
+              <!-- Open Bible Cover & Pages -->
+              <path d="M8 48C16 44 24 44.5 32 50C40 44.5 48 44 56 48V34.5C48 30.8 40 31.2 32 36.5C24 31.2 16 30.8 8 34.5V48Z" fill="rgba(255,255,255,0.14)" stroke="#FFFFFF" stroke-width="2.2" stroke-linejoin="round" />
+              <path d="M32 36.5V50" stroke="#FCD34D" stroke-width="1.8" />
+              <!-- Subtle Scripture Page Lines -->
+              <path d="M13 38.5C18 36.8 23 37 27.5 39.2M13 42.5C18 40.8 23 41 27.5 43.2M51 38.5C46 36.8 41 37 36.5 39.2M51 42.5C46 40.8 41 41 36.5 43.2" stroke="#BFDBFE" stroke-width="1.4" stroke-linecap="round" />
+              <!-- Golden Ribbon Bookmark -->
+              <path d="M30 49.5L28 57L32 54.5L36 57L34 49.5" fill="#F59E0B" />
+              <path d="M10 52C17.5 49 24.5 49.5 32 54C39.5 49.5 46.5 49 54 52" stroke="#93C5FD" stroke-width="1.8" stroke-linecap="round" />
             </svg>
             <div>
               <h1>ExamForge</h1>
-              <div style="font-size:11px; color:#FCD596; letter-spacing:0.08em; font-weight:600;">ENGINEERING MOCK SIMULATOR</div>
+              <div style="font-size:11.5px; color:#FCD596; letter-spacing:0.06em;">ENGINEERING MOCK SIMULATOR</div>
             </div>
           </div>
           <p class="auth-tagline">
             Prepare with purpose. Perform with faith. Excel with excellence.
           </p>
-          <p style="font-size:12.5px; color:rgba(255,255,255,0.76); margin-top:10px; max-width:340px; line-height:1.58;">
+          <p style="font-size:12.5px; color:rgba(255,255,255,0.74); margin-top:12px; max-width:320px; line-height:1.6;">
             Zero-cost, cloud-synced exam simulation for GATE, UPSC ESE, and technical exams — built for focus, accuracy, and peace of mind.
           </p>
-        </div>
-
-        <!-- Framed Sunrise & Cross Scene (100% Uncropped on Mobile & Laptop) -->
-        <div class="auth-scene-box" aria-hidden="true">
-          <svg viewBox="0 0 360 150" preserveAspectRatio="xMidYMax meet">
-            <defs>
-              <linearGradient id="authSkyGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#173161" />
-                <stop offset="52%" stop-color="#355586" />
-                <stop offset="82%" stop-color="#F2B872" />
-                <stop offset="100%" stop-color="#FDE3AD" />
-              </linearGradient>
-              <radialGradient id="authSunGlow" cx="50%" cy="68%" r="44%">
-                <stop offset="0%" stop-color="#FFF9DF" stop-opacity="0.98" />
-                <stop offset="42%" stop-color="#FBD07C" stop-opacity="0.72" />
-                <stop offset="100%" stop-color="#FBD07C" stop-opacity="0" />
-              </radialGradient>
-            </defs>
-            <rect width="360" height="150" fill="url(#authSkyGrad)" />
-            <rect width="360" height="150" fill="url(#authSunGlow)" />
-            <!-- Soft Sunrise Rays -->
-            <g stroke="#FFF6D6" stroke-width="1.2" opacity="0.28">
-              <line x1="180" y1="102" x2="95" y2="28" />
-              <line x1="180" y1="102" x2="138" y2="14" />
-              <line x1="180" y1="102" x2="180" y2="8" />
-              <line x1="180" y1="102" x2="222" y2="14" />
-              <line x1="180" y1="102" x2="265" y2="28" />
-            </g>
-            <!-- Rising Sun Disc -->
-            <circle cx="180" cy="102" r="28" fill="#FFF4C9" opacity="0.92" />
-            <!-- Distant Mountain Ridges -->
-            <path d="M0 120 Q72 86 146 106 T286 96 L360 112 L360 150 L0 150 Z" fill="#233C68" opacity="0.62" />
-            <path d="M0 132 Q95 96 180 112 T360 122 L360 150 L0 150 Z" fill="#132444" opacity="0.88" />
-            <!-- Foreground Hilltop Supporting Cross -->
-            <path d="M55 150 Q180 92 305 150 Z" fill="#0B162D" />
-            <!-- Centered Hilltop Cross Silhouette (Always Full & Uncropped) -->
-            <g transform="translate(180, 34)" fill="#182238" stroke="#FCE2AC" stroke-opacity="0.38" stroke-width="0.9">
-              <rect x="-3.4" y="0" width="6.8" height="82" rx="1.6" />
-              <rect x="-24" y="18" width="48" height="6.4" rx="1.6" />
-            </g>
-          </svg>
         </div>
 
         <div class="auth-verse-box">
@@ -1352,13 +1414,34 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div class="brand-logo-wrap">
-          <!-- Minimal Bible + Cross Logo -->
-          <svg width="46" height="46" viewBox="0 0 48 48" fill="none" aria-label="ExamForge Logo">
-            <circle cx="24" cy="14" r="12" fill="rgba(252,213,150,0.16)" />
-            <rect x="22.1" y="4" width="3.8" height="20.5" rx="1.4" fill="#FCD596" />
-            <rect x="15" y="9.8" width="18" height="3.6" rx="1.4" fill="#FCD596" />
-            <path d="M7.5 35C13.2 31.8 18.8 32 24 35.8C29.2 32 34.8 31.8 40.5 35V24.5C34.8 21.5 29.2 21.8 24 25.6C18.8 21.8 13.2 21.5 7.5 24.5V35Z" stroke="#EBF2FF" stroke-width="2.2" stroke-linejoin="round" fill="rgba(255,255,255,0.10)" />
-            <path d="M10 39.2C15 36.8 19.6 37.1 24 40C28.4 37.1 33 36.8 38 39.2" stroke="#7FB1FF" stroke-width="1.9" stroke-linecap="round" />
+          <!-- Ornate Open Scripture & Radiating Cross Logo -->
+          <svg width="48" height="48" viewBox="0 0 64 64" fill="none" aria-label="ExamForge Logo">
+            <defs>
+              <radialGradient id="sbLogoHalo" cx="50%" cy="34%" r="46%">
+                <stop offset="0%" stop-color="#FFFBEB" stop-opacity="0.95" />
+                <stop offset="55%" stop-color="#FCD34D" stop-opacity="0.38" />
+                <stop offset="100%" stop-color="#FCD34D" stop-opacity="0" />
+              </radialGradient>
+              <linearGradient id="sbLogoCross" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#FFFFFF" />
+                <stop offset="100%" stop-color="#FCD34D" />
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="22" r="21" fill="url(#sbLogoHalo)" />
+            <g stroke="#FDE68A" stroke-width="1.5" stroke-linecap="round" opacity="0.8">
+              <line x1="32" y1="3" x2="32" y2="7" />
+              <line x1="17" y1="9" x2="20" y2="12" />
+              <line x1="47" y1="9" x2="44" y2="12" />
+              <line x1="11" y1="21" x2="15" y2="21" />
+              <line x1="53" y1="21" x2="49" y2="21" />
+            </g>
+            <rect x="29.5" y="9" width="5" height="29" rx="1.4" fill="url(#sbLogoCross)" />
+            <rect x="20" y="16.5" width="24" height="4.6" rx="1.4" fill="url(#sbLogoCross)" />
+            <path d="M8 48C16 44 24 44.5 32 50C40 44.5 48 44 56 48V34.5C48 30.8 40 31.2 32 36.5C24 31.2 16 30.8 8 34.5V48Z" fill="rgba(255,255,255,0.12)" stroke="#E8F1FF" stroke-width="2.2" stroke-linejoin="round" />
+            <path d="M32 36.5V50" stroke="#FCD34D" stroke-width="1.8" />
+            <path d="M13 38.5C18 36.8 23 37 27.5 39.2M13 42.5C18 40.8 23 41 27.5 43.2M51 38.5C46 36.8 41 37 36.5 39.2M51 42.5C46 40.8 41 41 36.5 43.2" stroke="#93C5FD" stroke-width="1.4" stroke-linecap="round" />
+            <path d="M30 49.5L28 57L32 54.5L36 57L34 49.5" fill="#F59E0B" />
+            <path d="M10 52C17.5 49 24.5 49.5 32 54C39.5 49.5 46.5 49 54 52" stroke="#7FB1FF" stroke-width="1.8" stroke-linecap="round" />
           </svg>
           <div class="brand-title">ExamForge</div>
           <div class="brand-sub">Prepare · Perform · Excel</div>
@@ -1443,6 +1526,10 @@
           <button class="btn btn-outline btn-sm" id="btn-drive-status" title="Google Drive Connection">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 19h20L12 2z"/></svg>
             <span id="drive-status-label">Drive</span>
+          </button>
+
+          <button class="btn btn-outline btn-sm" id="btn-topbar-theme" title="Switch Light / Dark Theme">
+            <span id="topbar-theme-icon">🌙</span>
           </button>
 
           <div class="user-chip" id="user-chip">
@@ -2058,6 +2145,8 @@
         return html;
       },
 
+
+
       revokeTempUrls() {
         this._blobUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
         this._blobUrls = [];
@@ -2118,6 +2207,8 @@
         document.documentElement.setAttribute("data-theme", theme);
         localStorage.setItem("ef_theme", theme);
         this.state.settings.theme = theme;
+        const tbIcon = document.getElementById("topbar-theme-icon");
+        if (tbIcon) tbIcon.textContent = theme === "dark" ? "☀️" : "🌙";
       },
 
       /* --- Cloud + Local Persistence Layer --- */
@@ -2407,12 +2498,13 @@
           sidebarEl.classList.remove("mobile-open");
           sbBackdrop.classList.remove("show");
         });
-
-        document.getElementById("btn-theme-toggle").addEventListener("click", () => {
+        const flipTheme = () => {
           const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
           this.applyTheme(next);
           this.saveSettings();
-        });
+        };
+        document.getElementById("btn-theme-toggle").addEventListener("click", flipTheme);
+        document.getElementById("btn-topbar-theme")?.addEventListener("click", flipTheme);
 
         // Topbar Search (Ctrl+K)
         const searchInput = document.getElementById("global-search");
@@ -4055,11 +4147,11 @@ ${coordsStr}
           </div>
 
           <!-- Pre-Test Faith-Inspired Encouragement (Joshua 1:9) -->
-          <div style="padding:15px 18px; border-radius:13px; background:radial-gradient(circle at 88% 20%, rgba(252,213,150,0.28), transparent 46%), linear-gradient(125deg, #0F1E3C, #1C3A70); border:1px solid rgba(252,213,150,0.25); color:#FFFFFF; margin-bottom:16px;">
-            <p class="serif" style="font-style:italic; font-size:14.5px; line-height:1.58; color:#FFF8EB;">
-              ✦ “Be strong and courageous. Do not be afraid.”
+          <div style="padding:14px 16px; border-radius:12px; background:linear-gradient(125deg, #132549, #1E3E78); color:#FFFFFF; margin-bottom:16px;">
+            <p class="serif" style="font-style:italic; font-size:14.5px; line-height:1.55; color:#FFF7E8;">
+              “Be strong and courageous. Do not be afraid.”
             </p>
-            <div style="font-size:12px; font-weight:700; color:#FCD596; margin-top:5px;">— Joshua 1:9</div>
+            <div style="font-size:12px; font-weight:700; color:#FCD596; margin-top:4px;">— Joshua 1:9</div>
           </div>
 
           <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; text-align:center;">
@@ -4674,7 +4766,7 @@ ${coordsStr}
           </div>
         `;
 
-        // Responsive palette toggle inside Exam Workspace
+        // Responsive palette toggle & Desktop Mode switch inside Exam Workspace
         document.getElementById("ex-toggle-palette")?.addEventListener("click", () => {
           document.getElementById("exam-palette-pane")?.classList.toggle("mobile-show");
         });
@@ -5168,59 +5260,102 @@ ${coordsStr}
         const latestTest = EF.state.tests[0] || null;
 
         container.innerHTML = `
-          <!-- Sunrise & Cross Hero Banner (Philippians 4:13 — 100% Responsive, Never Cropped) -->
+          <!-- Sunrise & Calvary Cross Hero Banner (Philippians 4:13) -->
           <div class="hero-banner">
             <div class="hero-left">
-              <span class="hero-kicker">✦ Faith-Inspired Engineering Prep</span>
+              <div class="hero-pill">✦ Faith-Inspired Engineering Simulator</div>
               <div class="hero-title">Exam<span>Forge</span></div>
               <div class="hero-subtitle">Your Personal Engineering Exam Simulator</div>
               <div class="hero-tagline">Prepare with purpose. Perform with faith. Excel with excellence.</div>
             </div>
 
-            <!-- Dedicated Framed Sunrise & Cross Artwork (Scales Proportionally on Mobile & Desktop) -->
-            <div class="hero-scene" aria-hidden="true">
-              <svg viewBox="0 0 360 168" preserveAspectRatio="xMidYMax meet">
+            <!-- Dedicated Proportional Art Frame: Full Calvary Sunrise, Rays, Doves & Rim-Lit Cross (Never Clipped) -->
+            <div class="hero-art-stage" aria-hidden="true">
+              <svg viewBox="0 0 420 200" preserveAspectRatio="xMidYMax meet">
                 <defs>
-                  <linearGradient id="dashSkyGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#DCE9FB" />
-                    <stop offset="44%" stop-color="#F7EBD5" />
-                    <stop offset="78%" stop-color="#FBD594" />
-                    <stop offset="100%" stop-color="#F2B96E" />
-                  </linearGradient>
-                  <radialGradient id="dashSunHalo" cx="50%" cy="66%" r="48%">
-                    <stop offset="0%" stop-color="#FFFDF0" stop-opacity="0.98" />
-                    <stop offset="38%" stop-color="#FFE09C" stop-opacity="0.78" />
-                    <stop offset="100%" stop-color="#FFE09C" stop-opacity="0" />
+                  <radialGradient id="calvarySunHalo" cx="50%" cy="62%" r="52%">
+                    <stop offset="0%" stop-color="#FFFDF5" stop-opacity="0.98" />
+                    <stop offset="30%" stop-color="#FDE08D" stop-opacity="0.76" />
+                    <stop offset="65%" stop-color="#F59E0B" stop-opacity="0.28" />
+                    <stop offset="100%" stop-color="#F59E0B" stop-opacity="0" />
                   </radialGradient>
+                  <linearGradient id="calvaryCrossGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#2D1B0E" />
+                    <stop offset="72%" stop-color="#59371C" />
+                    <stop offset="100%" stop-color="#FDE68A" />
+                  </linearGradient>
+                  <linearGradient id="hillFrontGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#1E3A6E" />
+                    <stop offset="100%" stop-color="#0E1C38" />
+                  </linearGradient>
                 </defs>
-                <rect width="360" height="168" fill="url(#dashSkyGrad)" />
-                <rect width="360" height="168" fill="url(#dashSunHalo)" />
-                <!-- Gentle Dawn Rays -->
-                <g stroke="#FFFFFF" stroke-width="1.4" opacity="0.45">
-                  <line x1="180" y1="112" x2="82" y2="30" />
-                  <line x1="180" y1="112" x2="132" y2="14" />
-                  <line x1="180" y1="112" x2="180" y2="8" />
-                  <line x1="180" y1="112" x2="228" y2="14" />
-                  <line x1="180" y1="112" x2="278" y2="30" />
+
+                <!-- Glowing Dawn Aura -->
+                <ellipse cx="210" cy="126" rx="195" ry="118" fill="url(#calvarySunHalo)" />
+
+                <!-- Volumetric Golden Sunbeams -->
+                <g fill="#FFF7D6" opacity="0.34">
+                  <polygon points="210,126 70,12 108,4" />
+                  <polygon points="210,126 142,2 174,0" />
+                  <polygon points="210,126 246,0 278,2" />
+                  <polygon points="210,126 312,4 350,12" />
+                  <polygon points="210,126 24,52 46,32" />
+                  <polygon points="210,126 374,32 396,52" />
                 </g>
-                <!-- Glowing Dawn Sun -->
-                <circle cx="180" cy="112" r="32" fill="#FFF9DE" opacity="0.95" />
-                <!-- Layered Distant & Foreground Hills -->
-                <path d="M0 132 Q74 96 148 116 T292 106 L360 124 L360 168 L0 168 Z" fill="#4E6B96" opacity="0.42" />
-                <path d="M0 144 Q98 106 184 124 T360 134 L360 168 L0 168 Z" fill="#223A64" opacity="0.78" />
-                <path d="M52 168 Q180 104 308 168 Z" fill="#132342" />
-                <!-- Centered Hilltop Cross (Full, Crisp & Never Cut Off) -->
-                <g transform="translate(180, 34)" fill="#2B1E14" stroke="#FFF4D1" stroke-opacity="0.45" stroke-width="0.9">
-                  <rect x="-3.8" y="0" width="7.6" height="92" rx="1.8" />
-                  <rect x="-27" y="20" width="54" height="7" rx="1.8" />
+
+                <!-- Morning Sun Orb -->
+                <circle cx="210" cy="126" r="28" fill="#FFFDF7" opacity="0.96" />
+                <circle cx="210" cy="126" r="40" fill="#FDE08D" opacity="0.36" />
+
+                <!-- Soft Dawn Clouds -->
+                <path d="M44 64 Q58 54 74 61 Q88 53 102 64 Q86 69 44 64 Z" fill="#FFFFFF" opacity="0.52" />
+                <path d="M312 56 Q326 46 342 53 Q355 46 368 56 Q350 61 312 56 Z" fill="#FFFFFF" opacity="0.48" />
+
+                <!-- Distant Soaring Doves -->
+                <path d="M124 44 Q130 37 136 43 Q142 37 148 44 Q141 41 136 46 Q131 41 124 44 Z" fill="#6B4423" opacity="0.62" />
+                <path d="M276 34 Q281 28 286 33 Q291 28 296 34 Q290 31 286 35 Q282 31 276 34 Z" fill="#6B4423" opacity="0.52" />
+
+                <!-- Layered Mountain & Valley Ridges -->
+                <path d="M10 176 Q95 130 185 152 T340 136 Q380 144 410 176 Z" fill="#5D7BA6" opacity="0.32" />
+                <path d="M24 184 Q120 138 215 156 T396 144 L406 184 Z" fill="#27477D" opacity="0.55" />
+                <!-- Calvary Summit Mound & Foreground Hill -->
+                <path d="M36 194 Q130 162 210 144 Q290 162 384 194 Z" fill="url(#hillFrontGrad)" />
+                <path d="M168 156 Q210 134 252 156 Z" fill="#10203E" />
+
+                <!-- Majestic Rim-Lit Calvary Cross -->
+                <g transform="translate(210, 26)">
+                  <!-- Subtle Cross Halo -->
+                  <circle cx="0" cy="34" r="30" fill="#FFFBEB" opacity="0.35" />
+                  <!-- Vertical Post -->
+                  <rect x="-4.5" y="0" width="9" height="118" rx="1.8" fill="url(#calvaryCrossGrad)" />
+                  <!-- Crossbeam -->
+                  <rect x="-32" y="25" width="64" height="8.5" rx="1.8" fill="url(#calvaryCrossGrad)" />
+                  <!-- Stepped Stone Mound Base -->
+                  <path d="M-15 118 L-9 109 L9 109 L15 118 Z" fill="#23150B" />
                 </g>
               </svg>
             </div>
 
             <div class="hero-right">
-              <span class="hero-verse-mark">✦</span>
-              <div class="hero-verse">“I can do all things through Christ who strengthens me.”</div>
-              <span class="hero-verse-ref">— Philippians 4:13</span>
+              <div class="hero-verse-card">
+                <div class="hero-verse">“I can do all things through Christ who strengthens me.”</div>
+                <span class="hero-verse-ref">— Philippians 4:13</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Verse of the Day Spotlight (Placed Above Dashboard Grids & Charts) -->
+          <div class="votd-top-banner">
+            <div class="votd-top-main">
+              <div class="votd-top-head">
+                <span class="votd-label">✦ Verse of the Day</span>
+                <span style="font-size:10.5px; color:rgba(255,255,255,0.68); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:99px;">Offline Ready</span>
+                <span class="votd-ref" style="margin-left:auto;">— ${EF.esc(verse.ref)}</span>
+              </div>
+              <div class="votd-top-quote">“${EF.esc(verse.text)}”</div>
+            </div>
+            <div class="votd-top-side">
+              ${EF.esc(verse.note)}
             </div>
           </div>
 
@@ -5411,22 +5546,7 @@ ${coordsStr}
               </div>
             </div>
 
-            <!-- Offline Rotating Verse of the Day Card -->
-            <div class="votd-card">
-              <svg class="votd-horizon" viewBox="0 0 360 54" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M0 38 Q90 12 180 30 T360 22 L360 54 L0 54 Z" fill="#FCD596" opacity="0.28" />
-                <path d="M0 46 Q120 26 240 40 T360 34 L360 54 L0 54 Z" fill="#0B162C" opacity="0.65" />
-              </svg>
-              <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                  <span class="votd-label">✦ Verse of the Day</span>
-                  <span style="font-size:10.5px; color:rgba(255,255,255,0.72); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:99px;">Offline Ready</span>
-                </div>
-                <div class="votd-quote">“${EF.esc(verse.text)}”</div>
-                <div class="votd-ref">— ${EF.esc(verse.ref)}</div>
-              </div>
-              <div class="votd-note">${EF.esc(verse.note)}</div>
-            </div>
+
           </div>
         `;
 
